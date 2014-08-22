@@ -31,7 +31,6 @@
 #include "ack_tracker.h"
 #include "parse-number.h"
 #include "journal-reader.h"
-#include "journald-subsystem.h"
 #include "journald-helper.h"
 
 #include <stdlib.h>
@@ -441,7 +440,6 @@ journal_reader_init(LogPipe *s)
   if (!log_source_init(s))
     return FALSE;
 
-  self->journal = journald_new();
   gint res = journald_open(self->journal, SD_JOURNAL_LOCAL_ONLY);
   if (res < 0)
     {
@@ -526,7 +524,7 @@ journal_reader_init_watches(JournalReader *self)
 }
 
 JournalReader *
-journal_reader_new(GlobalConfig *cfg)
+journal_reader_new(GlobalConfig *cfg, Journald *journal)
 {
   JournalReader *self = g_new0(JournalReader, 1);
   log_source_init_instance(&self->super, cfg);
@@ -535,6 +533,7 @@ journal_reader_new(GlobalConfig *cfg)
   self->super.super.deinit = journal_reader_deinit;
   self->super.super.free_fn = journal_reader_free;
   self->persist_name = g_strdup("systemd-journal");
+  self->journal = journal;
   journal_reader_init_watches(self);
   return self;
 }

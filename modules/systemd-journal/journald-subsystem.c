@@ -173,3 +173,9 @@ journald_new()
   Journald *self = g_new0(Journald, 1);
   return self;
 }
+
+void
+journald_free(Journald *self)
+{
+  return;
+}

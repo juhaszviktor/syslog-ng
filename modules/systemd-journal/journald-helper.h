@@ -30,7 +30,4 @@ typedef void (*FOREACH_DATA_CALLBACK)(gchar *key, gchar *value, gpointer user_da
 
 void journald_foreach_data(Journald *self, FOREACH_DATA_CALLBACK func, gpointer user_data);
 
-
-
-
 #endif /* JOURNAL_HELPER_H_ */

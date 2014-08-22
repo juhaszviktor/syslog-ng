@@ -24,7 +24,7 @@ systemd_journal_sd_init(LogPipe *s)
   SystemdJournalSourceDriver *self = (SystemdJournalSourceDriver *)s;
   GlobalConfig *cfg = log_pipe_get_config(&self->super.super.super);
   gchar *persist_name = g_strdup_printf("journald_source_%s_%s", self->super.super.group, self->super.super.id);
-  self->reader = journal_reader_new(cfg);
+  self->reader = journal_reader_new(cfg, journald_new());
 
   journal_reader_options_init(&self->reader_options, cfg, self->super.super.group);
 

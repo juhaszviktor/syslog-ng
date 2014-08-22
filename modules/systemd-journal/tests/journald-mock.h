@@ -21,31 +21,20 @@
  *
  */
 
-#ifndef JOURNAL_READER_H_
-#define JOURNAL_READER_H_
+#ifndef JOURNALD_MOCK_H_
+#define JOURNALD_MOCK_H_
 
-#include "logsource.h"
 #include "journald-subsystem.h"
 
-typedef struct _JournalReader JournalReader;
+typedef struct _MockEntry MockEntry;
 
-typedef struct _JournalReaderOptions {
-  LogSourceOptions super;
-  gboolean initialized;
-  gint fetch_limit;
-  guint16 default_pri;
-  guint32 flags;
-  gchar *recv_time_zone;
-  gchar *prefix;
-  guint32 max_field_size;
-} JournalReaderOptions;
+Journald *journald_mock_new();
 
-JournalReader *journal_reader_new(GlobalConfig *cfg, Journald *journal);
-void journal_reader_set_persist_name(JournalReader *self, gchar *persist_name);
-void journal_reader_set_options(LogPipe *s, LogPipe *control, JournalReaderOptions *options, gint stats_level, gint stats_source, const gchar *stats_id, const gchar *stats_instance);
+MockEntry *mock_entry_new(const gchar *cursor);
 
-void journal_reader_options_init(JournalReaderOptions *options, GlobalConfig *cfg, const gchar *group_name);
-void journal_reader_options_defaults(JournalReaderOptions *options);
-void journal_reader_options_destroy(JournalReaderOptions *options);
+void mock_entry_add_data(MockEntry *self, gchar *data);
 
-#endif /* JOURNAL_READER_H_ */
+void journald_mock_add_entry(Journald *self, MockEntry *entry);
+
+
+#endif /* JOURNALD_MOCK_H_ */

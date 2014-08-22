@@ -24,3 +24,5 @@ EXTRA_DIST += $(BUILT_SOURCES) modules/systemd-journal/systemd-journal-grammar.y
 modules_systemd_journal_libsdjournal_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/modules/systemd-journal -I$(top_builddir)/modules/systemd-journal
 modules_systemd_journal_libsdjournal_la_LIBADD = $(MODULE_DEPS_LIBS)
 modules_systemd_journal_libsdjournal_la_LDFLAGS = $(MODULE_LDFLAGS)
+
+include modules/systemd-journal/tests/Makefile.am

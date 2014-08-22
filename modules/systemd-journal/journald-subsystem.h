@@ -40,6 +40,7 @@ enum {
 
 gboolean load_journald_subsystem();
 Journald *journald_new();
+void journald_free(Journald *self);
 
 int journald_open(Journald *self, int flags);
 void journald_close(Journald *self);
