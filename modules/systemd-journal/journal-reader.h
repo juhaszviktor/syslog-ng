@@ -21,41 +21,30 @@
  *
  */
 
-#include "messages.h"
-#include "cfg-parser.h"
-#include "plugin.h"
-#include "plugin-types.h"
-#include "systemd-journal.h"
+#ifndef JOURNAL_READER_H_
+#define JOURNAL_READER_H_
 
-extern CfgParser systemd_journal_parser;
+#include "logsource.h"
 
-static Plugin systemd_journal_plugins[] =
-{
-  {
-    .type = LL_CONTEXT_SOURCE,
-    .name = "systemd-journal",
-    .parser = &systemd_journal_parser,
-  },
-};
+typedef struct _JournalReader JournalReader;
 
-gboolean
-systemd_journal_module_init(GlobalConfig *cfg, CfgArgs *args)
-{
-  if (!load_journald_subsystem())
-    {
-      msg_error("Can't find systemd-journal on this system", NULL);
-      return FALSE;
-    }
-  plugin_register(cfg, systemd_journal_plugins, G_N_ELEMENTS(systemd_journal_plugins));
-  return TRUE;
-}
+typedef struct _JournalReaderOptions {
+  LogSourceOptions super;
+  gboolean initialized;
+  gint fetch_limit;
+  guint16 default_pri;
+  guint32 flags;
+  gchar *recv_time_zone;
+  gchar *prefix;
+  guint32 max_field_size;
+} JournalReaderOptions;
 
-const ModuleInfo module_info =
-{
-  .canonical_name = "systemd-journal",
-  .version = VERSION,
-  .description = "The systemd-journal module provides systemd journal source drivers for syslog-ng where it is available.",
-  .core_revision = SOURCE_REVISION,
-  .plugins = systemd_journal_plugins,
-  .plugins_len = G_N_ELEMENTS(systemd_journal_plugins),
-};
+JournalReader *journal_reader_new(GlobalConfig *cfg);
+void journal_reader_set_persist_name(JournalReader *self, gchar *persist_name);
+void journal_reader_set_options(LogPipe *s, LogPipe *control, JournalReaderOptions *options, gint stats_level, gint stats_source, const gchar *stats_id, const gchar *stats_instance);
+
+void journal_reader_options_init(JournalReaderOptions *options, GlobalConfig *cfg, const gchar *group_name);
+void journal_reader_options_defaults(JournalReaderOptions *options);
+void journal_reader_options_destroy(JournalReaderOptions *options);
+
+#endif /* JOURNAL_READER_H_ */

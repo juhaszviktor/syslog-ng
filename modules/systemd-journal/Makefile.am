@@ -5,7 +5,10 @@ modules_systemd_journal_libsdjournal_la_SOURCES = \
 	modules/systemd-journal/systemd-journal-grammar.y \
 	modules/systemd-journal/systemd-journal-parser.c \
 	modules/systemd-journal/systemd-journal-parser.h \
-	modules/systemd-journal/systemd-journal-plugin.c
+	modules/systemd-journal/systemd-journal-plugin.c \
+	modules/systemd-journal/journal-interface.h \
+	modules/systemd-journal/journal-reader.c \
+	modules/systemd-journal/journal-reader.h
 
 BUILT_SOURCES += modules/systemd-journal/systemd-journal-grammar.y \
 		 modules/systemd-journal/systemd-journal-grammar.c \
