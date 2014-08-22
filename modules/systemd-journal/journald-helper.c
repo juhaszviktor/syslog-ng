@@ -21,36 +21,39 @@
  *
  */
 
-#ifndef JOURNAL_SOURCE_INTERFACE_H_
-#define JOURNAL_SOURCE_INTERFACE_H_
+#include "journald-helper.h"
 
-#include <stdlib.h>
-#include <glib.h>
+#include <string.h>
 
-typedef struct sd_journal sd_journal;
+#define SD_JOURNAL_FOREACH_DATA(j, data, l)                             \
+        for (journald_restart_data(j); journald_enumerate_data((j), &(data), &(l)) > 0; )
 
-typedef struct _Journald Journald;
+void
+journald_parse_data(gchar *data, size_t length, gchar **key, gchar **value)
+{
+  gchar *pos = strchr(data, '=');
+  if (pos)
+    {
+      guint32 max_value_len = length - (pos - data + 1);
+      *key = g_strndup(data, pos - data);
+      *value = g_strndup(pos + 1, max_value_len);
+    }
+  else
+    {
+      *key = NULL;
+      *value = g_strndup(data, length);
+    }
+}
 
-/* Open flags */
-enum {
-        SD_JOURNAL_LOCAL_ONLY = 1,
-        SD_JOURNAL_RUNTIME_ONLY = 2,
-        SD_JOURNAL_SYSTEM_ONLY = 4
-};
-
-gboolean load_journald_subsystem();
-Journald *journald_new();
-
-int journald_open(Journald *self, int flags);
-void journald_close(Journald *self);
-int journald_seek_head(Journald *self);
-int journald_get_cursor(Journald *self, gchar **cursor);
-int journald_next(Journald *self);
-void journald_restart_data(Journald *self);
-int journald_enumerate_data(Journald *self, const void **data, gsize *length);
-int journald_seek_cursor(Journald *self, const gchar *cursor);
-int journald_get_fd(Journald *self);
-int journald_process(Journald *self);
-
-
-#endif /* JOURNAL_SOURCE_INTERFACE_H_ */
+void journald_foreach_data(Journald *self, FOREACH_DATA_CALLBACK func, gpointer user_data)
+{
+  const void *data;
+  size_t l = 0;
+  SD_JOURNAL_FOREACH_DATA(self, data, l)
+  {
+    gchar *key;
+    gchar *value;
+    journald_parse_data((gchar *)data, l, &key, &value);
+    func(key, value, user_data);
+  }
+}

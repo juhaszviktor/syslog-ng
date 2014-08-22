@@ -31,6 +31,33 @@
 
 static GModule *journald_module;
 
+struct _Journald {
+    sd_journal *journal;
+};
+
+typedef int (*SD_JOURNAL_OPEN)(sd_journal **ret, int flags);
+typedef void (*SD_JOURNAL_CLOSE)(sd_journal *j);
+typedef int (*SD_JOURNAL_SEEK_HEAD)(sd_journal *j);
+typedef int (*SD_JOURNAL_GET_CURSOR)(sd_journal *j, char **cursor);
+typedef int (*SD_JOURNAL_NEXT)(sd_journal *j);
+typedef void (*SD_JOURNAL_RESTART_DATA)(sd_journal *j);
+typedef int (*SD_JOURNAL_ENUMERATE_DATA)(sd_journal *j, const void **data, size_t *length);
+typedef int (*SD_JOURNAL_SEEK_CURSOR)(sd_journal *j, const char *cursor);
+typedef int (*SD_JOURNAL_GET_FD)(sd_journal *j);
+typedef int (*SD_JOURNAL_PROCESS)(sd_journal *j);
+
+
+SD_JOURNAL_OPEN sd_journal_open;
+SD_JOURNAL_CLOSE sd_journal_close;
+SD_JOURNAL_SEEK_HEAD sd_journal_seek_head;
+SD_JOURNAL_GET_CURSOR sd_journal_get_cursor;
+SD_JOURNAL_NEXT sd_journal_next;
+SD_JOURNAL_RESTART_DATA sd_journal_restart_data;
+SD_JOURNAL_ENUMERATE_DATA sd_journal_enumerate_data;
+SD_JOURNAL_SEEK_CURSOR sd_journal_seek_cursor;
+SD_JOURNAL_GET_FD sd_journal_get_fd;
+SD_JOURNAL_PROCESS sd_journal_process;
+
 gboolean
 load_journald_subsystem()
 {
@@ -85,5 +112,64 @@ load_journald_subsystem()
   return TRUE;
 error:
   g_module_close(journald_module);
+  journald_module = NULL;
   return FALSE;
+}
+
+int journald_open(Journald *self, int flags)
+{
+  return sd_journal_open(&self->journal, flags);
+}
+
+void journald_close(Journald *self)
+{
+  sd_journal_close(self->journal);
+  self->journal = NULL;
+}
+
+int journald_seek_head(Journald *self)
+{
+  return sd_journal_seek_head(self->journal);
+}
+
+int journald_get_cursor(Journald *self, gchar **cursor)
+{
+  return sd_journal_get_cursor(self->journal, cursor);
+}
+
+int journald_next(Journald *self)
+{
+  return sd_journal_next(self->journal);
+}
+
+void journald_restart_data(Journald *self)
+{
+  sd_journal_restart_data(self->journal);
+}
+
+int journald_enumerate_data(Journald *self, const void **data, gsize *length)
+{
+  return sd_journal_enumerate_data(self->journal, data, length);
+}
+
+int journald_seek_cursor(Journald *self, const gchar *cursor)
+{
+  return sd_journal_seek_cursor(self->journal, cursor);
+}
+
+int journald_get_fd(Journald *self)
+{
+  return sd_journal_get_fd(self->journal);
+}
+
+int journald_process(Journald *self)
+{
+  return sd_journal_process(self->journal);
+}
+
+Journald *
+journald_new()
+{
+  Journald *self = g_new0(Journald, 1);
+  return self;
 }

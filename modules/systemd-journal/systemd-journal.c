@@ -2,7 +2,6 @@
 #include "journald-subsystem.h"
 #include "systemd-journal.h"
 
-
 #include <stdlib.h>
 
 struct _SystemdJournalSourceDriver

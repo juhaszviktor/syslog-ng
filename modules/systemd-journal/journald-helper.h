@@ -21,36 +21,16 @@
  *
  */
 
-#ifndef JOURNAL_SOURCE_INTERFACE_H_
-#define JOURNAL_SOURCE_INTERFACE_H_
+#ifndef JOURNAL_HELPER_H_
+#define JOURNAL_HELPER_H_
 
-#include <stdlib.h>
-#include <glib.h>
+#include "journald-subsystem.h"
 
-typedef struct sd_journal sd_journal;
+typedef void (*FOREACH_DATA_CALLBACK)(gchar *key, gchar *value, gpointer user_data);
 
-typedef struct _Journald Journald;
-
-/* Open flags */
-enum {
-        SD_JOURNAL_LOCAL_ONLY = 1,
-        SD_JOURNAL_RUNTIME_ONLY = 2,
-        SD_JOURNAL_SYSTEM_ONLY = 4
-};
-
-gboolean load_journald_subsystem();
-Journald *journald_new();
-
-int journald_open(Journald *self, int flags);
-void journald_close(Journald *self);
-int journald_seek_head(Journald *self);
-int journald_get_cursor(Journald *self, gchar **cursor);
-int journald_next(Journald *self);
-void journald_restart_data(Journald *self);
-int journald_enumerate_data(Journald *self, const void **data, gsize *length);
-int journald_seek_cursor(Journald *self, const gchar *cursor);
-int journald_get_fd(Journald *self);
-int journald_process(Journald *self);
+void journald_foreach_data(Journald *self, FOREACH_DATA_CALLBACK func, gpointer user_data);
 
 
-#endif /* JOURNAL_SOURCE_INTERFACE_H_ */
+
+
+#endif /* JOURNAL_HELPER_H_ */

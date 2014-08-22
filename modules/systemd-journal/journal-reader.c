@@ -32,12 +32,9 @@
 #include "parse-number.h"
 #include "journal-reader.h"
 #include "journald-subsystem.h"
+#include "journald-helper.h"
 
 #include <stdlib.h>
-
-#define SD_JOURNAL_FOREACH_DATA(j, data, l)                             \
-        for (sd_journal_restart_data(j); sd_journal_enumerate_data((j), &(data), &(l)) > 0; )
-
 
 #define JR_THREADED 0x0001
 
@@ -58,7 +55,7 @@ struct _JournalReader {
   LogSource super;
   LogPipe *control;
   JournalReaderOptions *options;
-  sd_journal *journal;
+  Journald *journal;
   PollEvents *poll_events;
   struct iv_event schedule_wakeup;
   struct iv_task restart_task;
@@ -149,19 +146,56 @@ journal_reader_wakeup(LogSource *s)
 }
 
 static void
-journal_reader_parse_data(JournalReader *self, gchar *data, size_t length, gchar **key, gchar **value)
+journal_reader_handle_data(gchar *key, gchar *value, gpointer user_data)
 {
-  gchar *pos = strchr(data, '=');
-  guint32 max_value_len = MIN(length - (pos - data + 1), self->options->max_field_size);
-  if (pos)
+  gpointer *args = user_data;
+
+  LogMessage *msg = args[0];
+  gchar *prefix = args[1];
+
+  if (strcmp(key, "MESSAGE") == 0)
     {
-      *key = g_strndup(data, pos - data);
-      *value = g_strndup(pos + 1, max_value_len);
+      log_msg_set_value(msg, LM_V_MESSAGE, value, -1);
+    }
+  else if (strcmp(key, "_HOSTNAME") == 0)
+    {
+      log_msg_set_value(msg, LM_V_HOST, value, -1);
+    }
+  else if (strcmp(key, "_PID") == 0)
+    {
+      log_msg_set_value(msg, LM_V_PID, value, -1);
+    }
+  else if (strcmp(key, "_SOURCE_REALTIME_TIMESTAMP") == 0)
+    {
+      guint64 ts;
+      parse_number(value, (gint64 *) &ts);
+      msg->timestamps[LM_TS_STAMP].tv_sec = ts / 1000000;
+      msg->timestamps[LM_TS_STAMP].tv_usec = ts % 1000000;
+      msg->timestamps[LM_TS_STAMP].zone_offset = get_local_timezone_ofs(msg->timestamps[LM_TS_STAMP].tv_sec);
+    }
+  else if (strcmp(key, "_COMM") == 0)
+    {
+      log_msg_set_value(msg, LM_V_PROGRAM, value, -1);
+    }
+  else if (strcmp(key, "SYSLOG_FACILITY") == 0)
+    {
+      msg->pri = (msg->pri & 7) | atoi(value) << 3;
+    }
+  else if (strcmp(key, "PRIORITY") == 0)
+    {
+      msg->pri = (msg->pri & ~7) | atoi(value);
     }
   else
     {
-      *key = NULL;
-      *value = g_strdup(data);
+      NVHandle handle = log_msg_get_value_handle(key);
+      log_msg_set_value(msg, handle, value, -1);
+      if (prefix)
+        {
+          gchar *prefixed_key = g_strdup_printf("%s%s", prefix,
+              key);
+          NVHandle prefixed_handle = log_msg_get_value_handle(prefixed_key);
+          log_msg_set_value_indirect(msg, prefixed_handle, handle, 0, 0, strlen(value));
+        }
     }
 }
 
@@ -170,58 +204,13 @@ journal_reader_handle_message(JournalReader *self)
 {
   LogMessage *msg = log_msg_new_empty();
   LogPathOptions lpo = LOG_PATH_OPTIONS_INIT;
-  const void *data;
-  size_t l = 0;
+
   msg->pri = self->options->default_pri;
-  SD_JOURNAL_FOREACH_DATA(self->journal, data, l)
-    {
-      gchar *key;
-      gchar *value;
-      journal_reader_parse_data(self, (gchar *)data, l, &key, &value);
-      if (strcmp(key, "MESSAGE") == 0)
-        {
-          log_msg_set_value(msg, LM_V_MESSAGE, value, -1);
-        }
-      else if (strcmp(key, "_HOSTNAME") == 0)
-        {
-          log_msg_set_value(msg, LM_V_HOST, value, -1);
-        }
-      else if (strcmp(key, "_PID") == 0)
-        {
-          log_msg_set_value(msg, LM_V_PID, value, -1);
-        }
-      else if (strcmp(key, "_SOURCE_REALTIME_TIMESTAMP") == 0)
-        {
-          guint64 ts;
-          parse_number(value, (gint64 *)&ts);
-          msg->timestamps[LM_TS_STAMP].tv_sec = ts / 1000000;
-          msg->timestamps[LM_TS_STAMP].tv_usec = ts % 1000000;
-          msg->timestamps[LM_TS_STAMP].zone_offset = get_local_timezone_ofs(msg->timestamps[LM_TS_STAMP].tv_sec);
-        }
-      else if (strcmp(key, "_COMM") == 0)
-        {
-          log_msg_set_value(msg, LM_V_PROGRAM, value, -1);
-        }
-      else if (strcmp(key, "SYSLOG_FACILITY") == 0)
-        {
-          msg->pri = (msg->pri & 7) | atoi(value) << 3;
-        }
-      else if (strcmp(key, "PRIORITY") == 0)
-        {
-          msg->pri = (msg->pri & ~7) | atoi(value);
-        }
-      else
-        {
-          NVHandle handle = log_msg_get_value_handle(key);
-          log_msg_set_value(msg, handle, value, -1);
-          if (self->options->prefix)
-            {
-              gchar *prefixed_key = g_strdup_printf("%s%s", self->options->prefix, key);
-              NVHandle prefixed_handle = log_msg_get_value_handle(prefixed_key);
-              log_msg_set_value_indirect(msg, prefixed_handle, handle, 0, 0, strlen(value));
-            }
-        }
-    }
+
+  gpointer args[] = {msg, self->options->prefix};
+
+  journald_foreach_data(self->journal, journal_reader_handle_data, args);
+
   log_pipe_queue(&self->super.super, msg, &lpo);
   return log_source_free_to_send(&self->super);
 }
@@ -269,7 +258,7 @@ journal_reader_set_starting_position(JournalReader *self)
   gint rc;
   if (!journal_reader_load_state(self))
     {
-      rc = sd_journal_seek_head(self->journal);
+      rc = journald_seek_head(self->journal);
       if (rc != 0)
         {
           msg_error("Failed to seek to head of journal", evt_tag_errno("error", errno), NULL);
@@ -279,12 +268,12 @@ journal_reader_set_starting_position(JournalReader *self)
   else
     {
       JournalReaderState *state = persist_state_map_entry(self->persist_state, self->persist_handle);
-      rc = sd_journal_seek_cursor(self->journal, state->cursor);
+      rc = journald_seek_cursor(self->journal, state->cursor);
       persist_state_unmap_entry(self->persist_state, self->persist_handle);
       if (rc != 0)
         {
           msg_warning("Failed to seek to the cursor", evt_tag_str("cursor", state->cursor), evt_tag_errno("error", errno), NULL);
-          rc = sd_journal_seek_head(self->journal);
+          rc = journald_seek_head(self->journal);
           if (rc != 0)
             {
               msg_error("Failed to seek to head of journal", evt_tag_errno("error", errno), NULL);
@@ -293,7 +282,7 @@ journal_reader_set_starting_position(JournalReader *self)
         }
       else
         {
-          sd_journal_next(self->journal);
+          journald_next(self->journal);
         }
     }
   return TRUE;
@@ -303,7 +292,7 @@ static gchar *
 journal_reader_get_cursor(JournalReader *self)
 {
   gchar *cursor;
-  sd_journal_get_cursor(self->journal, &cursor);
+  journald_get_cursor(self->journal, &cursor);
   return cursor;
 }
 
@@ -340,7 +329,7 @@ journal_reader_fetch_log(JournalReader *self)
   gboolean has_eof = FALSE;
   while (msg_count < self->options->fetch_limit && !main_loop_worker_job_quit())
     {
-      gint rc = sd_journal_next(self->journal);
+      gint rc = journald_next(self->journal);
       if (rc < 0)
         {
           msg_error("Error occured while getting next message from journal", evt_tag_errno("error", errno), NULL);
@@ -440,7 +429,7 @@ static void
 journal_reader_io_process_async_input(gpointer s)
 {
   JournalReader *self = (JournalReader *)s;
-  sd_journal_process(self->journal);
+  journald_process(self->journal);
   journal_reader_io_process_input(s);
 }
 
@@ -452,27 +441,28 @@ journal_reader_init(LogPipe *s)
   if (!log_source_init(s))
     return FALSE;
 
-  gint res = sd_journal_open(&self->journal, SD_JOURNAL_LOCAL_ONLY);
+  self->journal = journald_new();
+  gint res = journald_open(self->journal, SD_JOURNAL_LOCAL_ONLY);
   if (res < 0)
     {
       msg_error("Can't open journal", evt_tag_errno("error", errno), NULL);
       return FALSE;
     }
 
-  gint fd = sd_journal_get_fd(self->journal);
+  gint fd = journald_get_fd(self->journal);
   if (fd < 0)
     {
       msg_error("Can't get fd from journal",
                 evt_tag_errno("error", errno),
                 NULL);
-      sd_journal_close(self->journal);
+      journald_close(self->journal);
       return FALSE;
     }
 
   if (!journal_reader_set_starting_position(self))
     {
       msg_error("Can't set starting position to the journal", NULL);
-      sd_journal_close(self->journal);
+      journald_close(self->journal);
       return FALSE;
     }
 
@@ -490,7 +480,7 @@ journal_reader_deinit(LogPipe *s)
 {
   JournalReader *self = (JournalReader *)s;
   journal_reader_stop_watches(self);
-  sd_journal_close(self->journal);
+  journald_close(self->journal);
   poll_events_free(self->poll_events);
   return TRUE;
 }
