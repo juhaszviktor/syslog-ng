@@ -21,6 +21,7 @@ include modules/tfgeoip/Makefile.am
 include modules/afstomp/Makefile.am
 include modules/redis/Makefile.am
 include modules/pseudofile/Makefile.am
+include modules/systemd-journal/Makefile.am
 
 SYSLOG_NG_MODULES	=	\
 	mod-afsocket mod-afstreams mod-affile mod-afprog \
