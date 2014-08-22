@@ -24,6 +24,9 @@
 #ifndef JOURNAL_SOURCE_INTERFACE_H_
 #define JOURNAL_SOURCE_INTERFACE_H_
 
+#include <stdlib.h>
+#include <glib.h>
+
 typedef struct sd_journal sd_journal;
 
 /* Open flags */
@@ -55,5 +58,7 @@ SD_JOURNAL_ENUMERATE_DATA sd_journal_enumerate_data;
 SD_JOURNAL_SEEK_CURSOR sd_journal_seek_cursor;
 SD_JOURNAL_GET_FD sd_journal_get_fd;
 SD_JOURNAL_PROCESS sd_journal_process;
+
+gboolean load_journald_subsystem();
 
 #endif /* JOURNAL_SOURCE_INTERFACE_H_ */

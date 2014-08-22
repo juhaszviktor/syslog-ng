@@ -31,7 +31,8 @@
 #include "ack_tracker.h"
 #include "parse-number.h"
 #include "journal-reader.h"
-#include "journal-interface.h"
+#include "journald-subsystem.h"
+
 #include <stdlib.h>
 
 #define SD_JOURNAL_FOREACH_DATA(j, data, l)                             \

@@ -1,73 +1,9 @@
 #include "systemd-journal.h"
-#include "journal-interface.h"
+#include "journald-subsystem.h"
 #include "systemd-journal.h"
 
-#include <gmodule.h>
+
 #include <stdlib.h>
-
-static GModule *journald_module;
-
-
-#define LOAD_SYMBOL(library, symbol) g_module_symbol(library, #symbol, (gpointer*)&symbol)
-
-#define JOURNAL_LIBRARY_NAME "libsystemd-journal.so.0"
-
-gboolean
-load_journald_subsystem()
-{
-  if (!journald_module)
-    {
-      journald_module = g_module_open(JOURNAL_LIBRARY_NAME, 0);
-      if (!journald_module)
-        {
-          return FALSE;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_open))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_close))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_seek_head))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_get_cursor))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_next))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_restart_data))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_enumerate_data))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_seek_cursor))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_get_fd))
-        {
-          goto error;
-        }
-      if (!LOAD_SYMBOL(journald_module, sd_journal_process))
-        {
-          goto error;
-        }
-    }
-  return TRUE;
-error:
-  g_module_close(journald_module);
-  return FALSE;
-}
 
 struct _SystemdJournalSourceDriver
 {

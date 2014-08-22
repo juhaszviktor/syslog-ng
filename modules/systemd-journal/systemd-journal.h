@@ -33,7 +33,6 @@ typedef struct _SystemdJournalSourceDriver SystemdJournalSourceDriver;
 
 LogDriver *systemd_journal_sd_new(GlobalConfig *cfg);
 
-gboolean load_journald_subsystem();
 LogSourceOptions *systemd_journal_get_source_options(LogDriver *s);
 JournalReaderOptions *systemd_journal_get_reader_options(LogDriver *s);
 

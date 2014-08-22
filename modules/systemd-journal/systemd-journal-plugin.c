@@ -25,7 +25,7 @@
 #include "cfg-parser.h"
 #include "plugin.h"
 #include "plugin-types.h"
-#include "systemd-journal.h"
+#include "journald-subsystem.h"
 
 extern CfgParser systemd_journal_parser;
 
