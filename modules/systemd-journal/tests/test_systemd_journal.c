@@ -22,6 +22,7 @@
  */
 
 #include "journald-mock.h"
+#include "test-source.h"
 #include "journald-helper.c"
 #include "journal-reader.c"
 #include "testutils.h"
@@ -97,12 +98,14 @@ __test_cursors(Journald *journald)
 {
   gchar *cursor;
   gint result = journald_get_cursor(journald, &cursor);
-  assert_string(cursor, "test_data1", ASSERTION_ERROR("Bad cursor fetched"));
+  assert_string(cursor, "test_data1", ASSERTION_ERROR("Bad cursor fetched"));\
+  g_free(cursor);
 
   result = journald_next(journald);
   assert_gint(result, 1, ASSERTION_ERROR("Bad next step result"));
   result = journald_get_cursor(journald, &cursor);
   assert_string(cursor, "test_data2", ASSERTION_ERROR("Bad cursor fetched"));
+  g_free(cursor);
 
   result = journald_next(journald);
   assert_gint(result, 0, ASSERTION_ERROR("Should not contain more elements"));
@@ -113,6 +116,7 @@ __test_cursors(Journald *journald)
   assert_gint(result, 1, ASSERTION_ERROR("Bad next step result"));
   result = journald_get_cursor(journald, &cursor);
   assert_string(cursor, "test_data1", ASSERTION_ERROR("Bad cursor fetched"));
+  g_free(cursor);
 
   result = journald_seek_cursor(journald, "test_data2");
   assert_gint(result, 0, ASSERTION_ERROR("Should find cursor"));
@@ -120,6 +124,7 @@ __test_cursors(Journald *journald)
   assert_gint(result, 1, ASSERTION_ERROR("Bad next step result"));
   result = journald_get_cursor(journald, &cursor);
   assert_string(cursor, "test_data2", ASSERTION_ERROR("Bad cursor fetched"));
+  g_free(cursor);
 }
 
 void
@@ -215,7 +220,7 @@ void
 __helper_test(gchar *key, gchar *value, gpointer user_data)
 {
   GHashTable *result = user_data;
-  g_hash_table_insert(result, key, value);
+  g_hash_table_insert(result, g_strdup(key), g_strdup(value));
   return;
 }
 
@@ -235,7 +240,7 @@ test_journald_helper()
   journald_seek_head(journald);
   journald_next(journald);
 
-  GHashTable *result = g_hash_table_new(g_str_hash, g_str_equal);
+  GHashTable *result = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
   journald_foreach_data(journald, __helper_test, result);
 
   gchar *message = g_hash_table_lookup(result, "MESSAGE");
@@ -248,109 +253,238 @@ test_journald_helper()
 
   journald_close(journald);
   journald_free(journald);
+  g_hash_table_unref(result);
 }
 
-typedef struct _TestSource {
-  LogPipe super;
-  JournalReaderOptions options;
-  JournalReader *reader;
-  Journald *journald_mock;
-  struct iv_task start_task;
-  struct iv_task stop_task;
-  struct iv_task test_task;
-} TestSource;
+MockEntry *
+__create_real_entry(Journald *journal, gchar *cursor_name)
+{
+  MockEntry *entry = mock_entry_new(cursor_name);
+  mock_entry_add_data(entry, "PRIORITY=6");
+  mock_entry_add_data(entry, "_UID=0");
+  mock_entry_add_data(entry, "_GID=0");
+  mock_entry_add_data(entry, "_BOOT_ID=90129174f7d742e6b4d06eb846e94c87");
+  mock_entry_add_data(entry, "_MACHINE_ID=d0dc49b7a2784e18b3689d9d9c35f47d");
+  mock_entry_add_data(entry, "_HOSTNAME=localhost.localdomain");
+  mock_entry_add_data(entry, "_CAP_EFFECTIVE=1fffffffff");
+  mock_entry_add_data(entry, "_TRANSPORT=syslog");
+  mock_entry_add_data(entry, "SYSLOG_FACILITY=10");
+  mock_entry_add_data(entry, "SYSLOG_IDENTIFIER=sshd");
+  mock_entry_add_data(entry, "_COMM=sshd");
+  mock_entry_add_data(entry, "_EXE=/usr/sbin/sshd");
+  mock_entry_add_data(entry, "_SELINUX_CONTEXT=system_u:system_r:sshd_t:s0-s0:c0.c1023");
+  mock_entry_add_data(entry, "_AUDIT_LOGINUID=1000");
+  mock_entry_add_data(entry, "_SYSTEMD_OWNER_UID=1000");
+  mock_entry_add_data(entry, "_SYSTEMD_SLICE=user-1000.slice");
+  mock_entry_add_data(entry, "SYSLOG_PID=2240");
+  mock_entry_add_data(entry, "_PID=2240");
+  mock_entry_add_data(entry, "_CMDLINE=sshd: foo_user [priv]");
+  mock_entry_add_data(entry, "MESSAGE=pam_unix(sshd:session): session opened for user foo_user by (uid=0)");
+  mock_entry_add_data(entry, "_AUDIT_SESSION=2");
+  mock_entry_add_data(entry, "_SYSTEMD_CGROUP=/user.slice/user-1000.slice/session-2.scope");
+  mock_entry_add_data(entry, "_SYSTEMD_SESSION=2");
+  mock_entry_add_data(entry, "_SYSTEMD_UNIT=session-2.scope");
+  mock_entry_add_data(entry, "_SOURCE_REALTIME_TIMESTAMP=1408967385496986");
+
+  return entry;
+}
+
+MockEntry *
+__create_dummy_entry(Journald *journal, gchar *cursor_name)
+{
+  MockEntry *entry = mock_entry_new(cursor_name);
+  mock_entry_add_data(entry, "MESSAGE=Dummy message");
+  mock_entry_add_data(entry, "_PID=2345");
+  mock_entry_add_data(entry, "_COMM=dummy");
+  return entry;
+}
+
+void
+_test_default_working_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
+{
+  MockEntry *entry = __create_dummy_entry(journal, "default_test");
+  journald_mock_add_entry(journal, entry);
+  configuration->recv_time_zone = g_strdup("+06:00");
+  self->user_data = options;
+}
+
+void
+_test_default_working_test(TestCase *self, TestSource *src, LogMessage *msg)
+{
+  const gchar *message = log_msg_get_value(msg, LM_V_MESSAGE, NULL);
+  JournalReaderOptions *options = self->user_data;
+  assert_string(message, "Dummy message", ASSERTION_ERROR("Bad message"));
+  assert_gint(msg->pri, options->default_pri, ASSERTION_ERROR("Bad default prio"));
+  assert_gint(options->fetch_limit, 10, ASSERTION_ERROR("Bad default fetch_limit"));
+  assert_gint(options->max_field_size, 64 * 1024, ASSERTION_ERROR("Bad max field size"));
+  assert_gpointer(options->prefix, NULL, ASSERTION_ERROR("Bad default prefix value"));
+  assert_string(options->recv_time_zone, configuration->recv_time_zone, ASSERTION_ERROR("Bad default timezone"));
+  test_source_finish_tc(src);
+}
+
+void
+_test_prefix_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
+{
+  MockEntry *entry = __create_real_entry(journal, "prefix_test");
+
+  options->prefix = g_strdup((gchar *)self->user_data);
+
+  journald_mock_add_entry(journal, entry);
+}
+
+void
+__test_message_has_no_prefix(TestCase *self, LogMessage *msg)
+{
+  gchar *requested_name = g_strdup_printf("%s%s", (gchar *)self->user_data, "MESSAGE");
+  NVHandle handle = log_msg_get_value_handle(requested_name);
+  gssize value_len;
+  log_msg_get_value(msg, handle, &value_len);
+  assert_gint(value_len, 0, ASSERTION_ERROR("MESSAGE has prefix"));
+  g_free(requested_name);
+}
+
+void
+__test_other_has_prefix(TestCase *self, LogMessage *msg)
+{
+  gchar *requested_name = g_strdup_printf("%s%s", (gchar *) self->user_data, "_CMDLINE");
+  NVHandle handle = log_msg_get_value_handle(requested_name);
+  gssize value_len;
+  const gchar *value = log_msg_get_value(msg, handle, &value_len);
+  assert_string(value, "sshd: foo_user [priv]", ASSERTION_ERROR("Bad value for prefixed key"));
+  g_free(requested_name);
+}
+
+void
+_test_prefix_test(TestCase *self, TestSource *src, LogMessage *msg)
+{
+  const gchar *message = log_msg_get_value(msg, LM_V_MESSAGE, NULL);
+  assert_string(message, "pam_unix(sshd:session): session opened for user foo_user by (uid=0)", ASSERTION_ERROR("Bad message"));
+
+  __test_message_has_no_prefix(self, msg);
+  __test_other_has_prefix(self, msg);
+
+  test_source_finish_tc(src);
+}
+
+void
+_test_field_size_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
+{
+  MockEntry *entry = __create_real_entry(journal, "field_size_test");
+  options->max_field_size = GPOINTER_TO_INT(self->user_data);
+  journald_mock_add_entry(journal, entry);
+}
 
 gboolean
-test_source_init(LogPipe *s)
+__check_value_len(NVHandle handle, const gchar *name, const gchar *value, gssize value_len, gpointer user_data)
 {
-  TestSource *self = (TestSource *)s;
-  iv_task_register(&self->test_task);
-  return TRUE;
+  TestCase *self = user_data;
+  gchar *error_message = g_strdup_printf("Bad value size; name: %s, value: %s len: %ld", name, value, value_len);
+
+  assert_true(value_len <= GPOINTER_TO_INT(self->user_data), ASSERTION_ERROR(error_message));
+
+  g_free(error_message);
+  return FALSE;
 }
 
-gboolean
-test_source_deinit(LogPipe *s)
+
+void
+_test_field_size_test(TestCase *self, TestSource *src, LogMessage *msg)
 {
-  TestSource *self = (TestSource *)s;
-  return TRUE;
+  log_msg_nv_table_foreach(msg->payload, __check_value_len, self);
+  test_source_finish_tc(src);
 }
 
 void
-test_source_free(LogPipe *s)
+_test_timezone_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
 {
-  TestSource *self = (TestSource *)s;
-
+  MockEntry *entry = __create_real_entry(journal, "time_zone_test");
+  options->recv_time_zone = g_strdup((gchar *)self->user_data);
+  journald_mock_add_entry(journal, entry);
 }
 
 void
-test_source_queue(LogPipe *s, LogMessage *msg, const LogPathOptions *path_options, gpointer user_data)
+_test_timezone_test(TestCase *self, TestSource *src, LogMessage *msg)
 {
-  TestSource *self = (TestSource *)s;
-}
-
-TestSource *
-test_source_new(GlobalConfig *cfg)
-{
-  TestSource *self = g_new0(TestSource, 1);
-  log_pipe_init_instance(&self->super, cfg);
-  self->super.init = test_source_init;
-  self->super.deinit = test_source_deinit;
-  self->super.free_fn = test_source_free;
-  self->super.queue = test_source_queue;
-  self->journald_mock = journald_mock_new();
-  journal_reader_options_defaults(&self->options);
-  return self;
+  assert_gint(msg->timestamps[LM_TS_STAMP].zone_offset, 9 * 3600, ASSERTION_ERROR("Bad time zone info"));
+  test_source_finish_tc(src);
 }
 
 void
-start_source(gpointer user_data)
+_test_default_level_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
 {
-  TestSource *self = (TestSource *)user_data;
-  log_pipe_init(&self->super);
+  MockEntry *entry = __create_dummy_entry(journal, "test default level");
+  gint level = GPOINTER_TO_INT(self->user_data);
+  if (options->default_pri == 0xFFFF)
+    options->default_pri = LOG_USER;
+  options->default_pri = (options->default_pri & ~7) | level;
+
+  journald_mock_add_entry(journal, entry);
 }
 
 void
-stop_source(gpointer user_data)
+_test_default_level_test(TestCase *self, TestSource *src, LogMessage *msg)
 {
-  TestSource *self = (TestSource *)user_data;
-  log_pipe_deinit(&self->super);
-  iv_quit();
+  gint level = GPOINTER_TO_INT(self->user_data);
+  assert_gint(msg->pri, LOG_LOCAL0 | level, ASSERTION_ERROR("Bad default prio"));
+  test_source_finish_tc(src);
 }
 
 void
-first_test(gpointer user_data)
+_test_default_facility_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
 {
-  TestSource *self = (TestSource *)user_data;
-  iv_task_register(&self->stop_task);
+  MockEntry *entry = __create_dummy_entry(journal, "test default facility");
+  gint facility = GPOINTER_TO_INT(self->user_data);
+  if(options->default_pri == 0xFFFF)
+    options->default_pri = LOG_NOTICE;
+  options->default_pri = (options->default_pri & 7) | facility;
+  journald_mock_add_entry(journal, entry);
+}
+
+void
+_test_default_facility_test(TestCase *self, TestSource *src, LogMessage *msg)
+{
+  gint facility = GPOINTER_TO_INT(self->user_data);
+  assert_gint(msg->pri, facility | LOG_NOTICE, ASSERTION_ERROR("Bad default prio"));
+  test_source_finish_tc(src);
 }
 
 void
 test_journal_reader()
 {
   TestSource *src = test_source_new(configuration);
-  IV_TASK_INIT(&src->start_task);
-  src->start_task.cookie = src;
-  src->start_task.handler = start_source;
-  IV_TASK_INIT(&src->stop_task);
-  src->stop_task.cookie = src;
-  src->stop_task.handler = stop_source;
+  TestCase tc_default_working = { _test_default_working_init, _test_default_working_test, NULL, NULL };
+  TestCase tc_prefix = { _test_prefix_init, _test_prefix_test, NULL, "this.is.a.prefix." };
+  TestCase tc_max_field_size = { _test_field_size_init, _test_field_size_test, NULL, GINT_TO_POINTER(10)};
+  TestCase tc_timezone = { _test_timezone_init, _test_timezone_test, NULL, "+09:00" };
+  TestCase tc_default_level =  { _test_default_level_init, _test_default_level_test, NULL, GINT_TO_POINTER(LOG_ERR) };
+  TestCase tc_default_facility = { _test_default_facility_init, _test_default_facility_test, NULL, GINT_TO_POINTER(LOG_AUTH) };
 
-  IV_TASK_INIT(&src->test_task);
-  src->test_task.cookie = src;
-  src->test_task.handler = first_test;
-  iv_task_register(&src->start_task);
-  iv_main();
+  test_source_add_test_case(src, &tc_default_working);
+  test_source_add_test_case(src, &tc_prefix);
+  test_source_add_test_case(src, &tc_max_field_size);
+  test_source_add_test_case(src, &tc_timezone);
+  test_source_add_test_case(src, &tc_default_level);
+  test_source_add_test_case(src, &tc_default_facility);
+
+  test_source_run_tests(src);
+  log_pipe_unref((LogPipe *)src);
 }
 
 int
 main(int argc, char **argv)
 {
   app_startup();
+  main_thread_handle =  get_thread_id();
   configuration = cfg_new(0x306);
   configuration->threaded = FALSE;
+  configuration->state = persist_state_new("test_systemd_journal.persist");
+  configuration->keep_hostname = TRUE;
+  persist_state_start(configuration->state);
   JOURNALD_TESTCASE(test_journald_mock);
   JOURNALD_TESTCASE(test_journald_helper);
   JOURNALD_TESTCASE(test_journal_reader);
+  persist_state_cancel(configuration->state);
+  unlink("test_systemd_journal.persist");
   app_shutdown();
   return 0;
 }

@@ -150,19 +150,20 @@ journal_reader_handle_data(gchar *key, gchar *value, gpointer user_data)
   gpointer *args = user_data;
 
   LogMessage *msg = args[0];
-  gchar *prefix = args[1];
+  JournalReaderOptions *options = args[1];
+  gssize value_len = MIN(strlen(value), options->max_field_size);
 
   if (strcmp(key, "MESSAGE") == 0)
     {
-      log_msg_set_value(msg, LM_V_MESSAGE, value, -1);
+      log_msg_set_value(msg, LM_V_MESSAGE, value, value_len);
     }
   else if (strcmp(key, "_HOSTNAME") == 0)
     {
-      log_msg_set_value(msg, LM_V_HOST, value, -1);
+      log_msg_set_value(msg, LM_V_HOST, value, value_len);
     }
   else if (strcmp(key, "_PID") == 0)
     {
-      log_msg_set_value(msg, LM_V_PID, value, -1);
+      log_msg_set_value(msg, LM_V_PID, value, value_len);
     }
   else if (strcmp(key, "_SOURCE_REALTIME_TIMESTAMP") == 0)
     {
@@ -170,11 +171,15 @@ journal_reader_handle_data(gchar *key, gchar *value, gpointer user_data)
       parse_number(value, (gint64 *) &ts);
       msg->timestamps[LM_TS_STAMP].tv_sec = ts / 1000000;
       msg->timestamps[LM_TS_STAMP].tv_usec = ts % 1000000;
-      msg->timestamps[LM_TS_STAMP].zone_offset = get_local_timezone_ofs(msg->timestamps[LM_TS_STAMP].tv_sec);
+      msg->timestamps[LM_TS_STAMP].zone_offset = time_zone_info_get_offset(options->recv_time_zone_info, msg->timestamps[LM_TS_STAMP].tv_sec);
+      if (msg->timestamps[LM_TS_STAMP].zone_offset == -1)
+        {
+          msg->timestamps[LM_TS_STAMP].zone_offset = get_local_timezone_ofs(msg->timestamps[LM_TS_STAMP].tv_sec);
+        }
     }
   else if (strcmp(key, "_COMM") == 0)
     {
-      log_msg_set_value(msg, LM_V_PROGRAM, value, -1);
+      log_msg_set_value(msg, LM_V_PROGRAM, value, value_len);
     }
   else if (strcmp(key, "SYSLOG_FACILITY") == 0)
     {
@@ -187,13 +192,13 @@ journal_reader_handle_data(gchar *key, gchar *value, gpointer user_data)
   else
     {
       NVHandle handle = log_msg_get_value_handle(key);
-      log_msg_set_value(msg, handle, value, -1);
-      if (prefix)
+      log_msg_set_value(msg, handle, value, value_len);
+      if (options->prefix)
         {
-          gchar *prefixed_key = g_strdup_printf("%s%s", prefix,
-              key);
+          gchar *prefixed_key = g_strdup_printf("%s%s", options->prefix, key);
           NVHandle prefixed_handle = log_msg_get_value_handle(prefixed_key);
-          log_msg_set_value_indirect(msg, prefixed_handle, handle, 0, 0, strlen(value));
+          log_msg_set_value_indirect(msg, prefixed_handle, handle, 0, 0, value_len);
+          g_free(prefixed_key);
         }
     }
 }
@@ -206,7 +211,7 @@ journal_reader_handle_message(JournalReader *self)
 
   msg->pri = self->options->default_pri;
 
-  gpointer args[] = {msg, self->options->prefix};
+  gpointer args[] = {msg, self->options};
 
   journald_foreach_data(self->journal, journal_reader_handle_data, args);
 
@@ -336,7 +341,6 @@ journal_reader_fetch_log(JournalReader *self)
         }
       if (rc == 0)
         {
-          fprintf(stderr, "EOF\n");
           has_eof = TRUE;
           break;
         }
@@ -487,6 +491,8 @@ static void
 journal_reader_free(LogPipe *s)
 {
   JournalReader *self = (JournalReader *) s;
+  log_pipe_unref(self->control);
+  log_source_free(&self->super.super);
   g_free(self->persist_name);
   return;
 }
@@ -547,6 +553,14 @@ journal_reader_options_init(JournalReaderOptions *options, GlobalConfig *cfg, co
   log_source_options_init(&options->super, cfg, group_name);
   if (cfg->threaded)
     options->flags |= JR_THREADED;
+
+  if (options->recv_time_zone == NULL)
+    options->recv_time_zone = g_strdup(cfg->recv_time_zone);
+  if (options->recv_time_zone_info == NULL)
+    options->recv_time_zone_info = time_zone_info_new(options->recv_time_zone);
+
+
+
   options->initialized = TRUE;
 }
 
@@ -555,7 +569,7 @@ journal_reader_options_defaults(JournalReaderOptions *options)
 {
   log_source_options_defaults(&options->super);
   options->fetch_limit = 10;
-  options->default_pri = (16 << 3) | LOG_NOTICE;
+  options->default_pri = LOG_LOCAL0 | LOG_NOTICE;
   options->max_field_size = 64 * 1024;
 }
 
@@ -563,5 +577,20 @@ void
 journal_reader_options_destroy(JournalReaderOptions *options)
 {
   log_source_options_destroy(&options->super);
+  if (options->prefix)
+    {
+      g_free(options->prefix);
+      options->prefix = NULL;
+    }
+  if (options->recv_time_zone)
+    {
+      g_free(options->recv_time_zone);
+      options->recv_time_zone = NULL;
+    }
+  if (options->recv_time_zone_info)
+    {
+      time_zone_info_free(options->recv_time_zone_info);
+      options->recv_time_zone_info = NULL;
+    }
   options->initialized = FALSE;
 }

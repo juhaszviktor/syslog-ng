@@ -21,41 +21,30 @@
  *
  */
 
-#include "journald-helper.h"
+#ifndef TEST_SOURCE_H_
+#define TEST_SOURCE_H_
 
-#include <string.h>
+#include "syslog-ng.h"
+#include "journal-reader.h"
+#include "journald-mock.h"
+#include <iv.h>
 
-#define SD_JOURNAL_FOREACH_DATA(j, data, l)                             \
-        for (journald_restart_data(j); journald_enumerate_data((j), &(data), &(l)) > 0; )
+typedef struct _TestSource TestSource;
+typedef struct _TestCase TestCase;
 
-void
-journald_parse_data(gchar *data, size_t length, gchar **key, gchar **value)
-{
-  gchar *pos = strchr(data, '=');
-  if (pos)
-    {
-      guint32 max_value_len = length - (pos - data + 1);
-      *key = g_strndup(data, pos - data);
-      *value = g_strndup(pos + 1, max_value_len);
-    }
-  else
-    {
-      *key = NULL;
-      *value = g_strndup(data, length);
-    }
-}
+struct _TestCase {
+    void (*init)(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options);
+    void (*checker)(TestCase *self, TestSource *src, LogMessage *msg);
+    void (*finish)(TestCase *self);
+    gpointer user_data;
+};
 
-void journald_foreach_data(Journald *self, FOREACH_DATA_CALLBACK func, gpointer user_data)
-{
-  const void *data;
-  size_t l = 0;
-  SD_JOURNAL_FOREACH_DATA(self, data, l)
-  {
-    gchar *key;
-    gchar *value;
-    journald_parse_data((gchar *)data, l, &key, &value);
-    func(key, value, user_data);
-    g_free(key);
-    g_free(value);
-  }
-}
+
+TestSource *test_source_new(GlobalConfig *cfg);
+
+void test_source_add_test_case(TestSource *s, TestCase *tc);
+void test_source_run_tests(TestSource *s);
+void test_source_finish_tc(TestSource *s);
+
+
+#endif /* TEST_SOURCE_H_ */

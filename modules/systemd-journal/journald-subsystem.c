@@ -177,5 +177,6 @@ journald_new()
 void
 journald_free(Journald *self)
 {
+  g_free(self);
   return;
 }

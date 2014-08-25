@@ -36,6 +36,7 @@ typedef struct _JournalReaderOptions {
   guint16 default_pri;
   guint32 flags;
   gchar *recv_time_zone;
+  TimeZoneInfo *recv_time_zone_info;
   gchar *prefix;
   guint32 max_field_size;
 } JournalReaderOptions;

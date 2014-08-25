@@ -36,6 +36,7 @@ struct _Journald {
     GList *entries;
     GList *current_pos;
     GList *next_element;
+    gboolean opened;
 };
 
 struct _MockEntry {
@@ -46,23 +47,25 @@ struct _MockEntry {
 
 int journald_open(Journald *self, int flags)
 {
-  return pipe2(self->fds, O_NONBLOCK);
+  self->opened = TRUE;
+  return 0;
 }
 
 void journald_close(Journald *self)
 {
-  close(self->fds[0]);
-  close(self->fds[1]);
+  self->opened = FALSE;
 }
 
 int journald_seek_head(Journald *self)
 {
+  g_assert(self->opened);
   self->next_element = g_list_first(self->entries);
   return 0;
 }
 
 int journald_get_cursor(Journald *self, gchar **cursor)
 {
+  g_assert(self->opened);
   MockEntry *entry = (MockEntry *)self->current_pos->data;
   *cursor = g_strdup(entry->cursor);
   return 0;
@@ -70,6 +73,7 @@ int journald_get_cursor(Journald *self, gchar **cursor)
 
 int journald_next(Journald *self)
 {
+  g_assert(self->opened);
   self->current_pos = self->next_element;
   if (self->current_pos)
     {
@@ -81,12 +85,14 @@ int journald_next(Journald *self)
 
 void journald_restart_data(Journald *self)
 {
+  g_assert(self->opened);
   MockEntry *entry = (MockEntry *)self->current_pos->data;
   entry->index = 0;
 }
 
 int journald_enumerate_data(Journald *self, const void **data, gsize *length)
 {
+  g_assert(self->opened);
   MockEntry *entry = (MockEntry *)self->current_pos->data;
   if (entry->index >= entry->data->len)
     {
@@ -108,6 +114,7 @@ compare_mock_entries(gconstpointer a, gconstpointer b)
 
 int journald_seek_cursor(Journald *self, const gchar *cursor)
 {
+  g_assert(self->opened);
   GList *found_element = g_list_find_custom(self->entries, cursor, compare_mock_entries);
   if (found_element)
     {
@@ -123,11 +130,13 @@ int journald_seek_cursor(Journald *self, const gchar *cursor)
 
 int journald_get_fd(Journald *self)
 {
+  g_assert(self->opened);
   return self->fds[0];
 }
 
 int journald_process(Journald *self)
 {
+  g_assert(self->opened);
   guint8 data;
   gint res = 1;
   while(res > 0)
@@ -145,13 +154,8 @@ Journald *
 journald_mock_new()
 {
   Journald *self = g_new0(Journald, 1);
+  pipe2(self->fds, O_NONBLOCK);
   return self;
-}
-
-void
-journald_free(Journald *self)
-{
-  return;
 }
 
 MockEntry *
@@ -170,12 +174,36 @@ mock_entry_add_data(MockEntry *self, gchar *data)
 }
 
 void
+mock_entry_free(gpointer s)
+{
+  MockEntry *self = (MockEntry *)s;
+  g_free(self->cursor);
+  g_ptr_array_free(self->data, TRUE);
+  g_free(self);
+}
+
+void
 journald_mock_add_entry(Journald *self, MockEntry *entry)
 {
+  gboolean first_element = (self->entries == NULL);
   self->entries = g_list_append(self->entries, entry);
   gint res = write(self->fds[1], "1", 1);
   if (res < 0)
     {
       fprintf(stderr, "JournaldMOCK: Can't write the pipe's fd: %s\n", strerror(errno));
     }
+  if (first_element && !self->next_element)
+    {
+      self->next_element = self->entries;
+    }
+}
+
+void
+journald_free(Journald *self)
+{
+  close(self->fds[0]);
+  close(self->fds[1]);
+  g_list_free_full(self->entries, mock_entry_free);
+  g_free(self);
+  return;
 }
