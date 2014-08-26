@@ -27,9 +27,11 @@
 #include <stdlib.h>
 #include <glib.h>
 
-typedef struct sd_journal sd_journal;
-
 typedef struct _Journald Journald;
+
+typedef void (*FOREACH_DATA_CALLBACK)(gchar *key, gchar *value, gpointer user_data);
+
+void journald_foreach_data(Journald *self, FOREACH_DATA_CALLBACK func, gpointer user_data);
 
 /* Open flags */
 enum {
@@ -52,6 +54,5 @@ int journald_enumerate_data(Journald *self, const void **data, gsize *length);
 int journald_seek_cursor(Journald *self, const gchar *cursor);
 int journald_get_fd(Journald *self);
 int journald_process(Journald *self);
-
 
 #endif /* JOURNAL_SOURCE_INTERFACE_H_ */

@@ -38,8 +38,8 @@ struct _TestSource {
   struct iv_task work;
 };
 
-gboolean
-test_source_init(LogPipe *s)
+static gboolean
+__init(LogPipe *s)
 {
   TestSource *self = (TestSource *)s;
   self->reader = journal_reader_new(configuration, self->journald_mock);
@@ -52,15 +52,12 @@ test_source_init(LogPipe *s)
   journal_reader_set_options((LogPipe *)self->reader, &self->super, &self->options, 3, SCS_JOURNALD, "test", "1");
   journal_reader_set_persist_name(self->reader, "test_cursor");
   log_pipe_append((LogPipe *)self->reader, &self->super);
-  if (!log_pipe_init((LogPipe *)self->reader))
-    {
-      assert_true(FALSE, ASSERTION_ERROR("Can't initialize reader"));
-    }
+  assert_true(log_pipe_init((LogPipe *)self->reader), ASSERTION_ERROR("Can't initialize reader"));
   return TRUE;
 }
 
-gboolean
-test_source_deinit(LogPipe *s)
+static gboolean
+__deinit(LogPipe *s)
 {
   TestSource *self = (TestSource *)s;
   journal_reader_options_destroy(&self->options);
@@ -69,16 +66,16 @@ test_source_deinit(LogPipe *s)
   return TRUE;
 }
 
-void
-test_source_free(LogPipe *s)
+static void
+__free(LogPipe *s)
 {
   TestSource *self = (TestSource *)s;
   journald_free(self->journald_mock);
   g_list_free(self->tests);
 }
 
-void
-test_source_queue(LogPipe *s, LogMessage *msg, const LogPathOptions *path_options, gpointer user_data)
+static void
+__queue(LogPipe *s, LogMessage *msg, const LogPathOptions *path_options, gpointer user_data)
 {
   TestSource *self = (TestSource *)s;
   if (self->current_test_case && self->current_test_case->checker)
@@ -92,15 +89,15 @@ test_source_queue(LogPipe *s, LogMessage *msg, const LogPathOptions *path_option
   log_msg_drop(msg, path_options);
 }
 
-void
-start_source(gpointer user_data)
+static void
+__start_source(gpointer user_data)
 {
   TestSource *self = (TestSource *)user_data;
   log_pipe_init(&self->super);
 }
 
-void
-stop_source(gpointer user_data)
+static void
+__stop_source(gpointer user_data)
 {
   TestSource *self = (TestSource *)user_data;
   log_pipe_deinit(&self->super);
@@ -112,19 +109,19 @@ test_source_new(GlobalConfig *cfg)
 {
   TestSource *self = g_new0(TestSource, 1);
   log_pipe_init_instance(&self->super, cfg);
-  self->super.init = test_source_init;
-  self->super.deinit = test_source_deinit;
-  self->super.free_fn = test_source_free;
-  self->super.queue = test_source_queue;
+  self->super.init = __init;
+  self->super.deinit = __deinit;
+  self->super.free_fn = __free;
+  self->super.queue = __queue;
   self->journald_mock = journald_mock_new();
   journal_reader_options_defaults(&self->options);
 
   IV_TASK_INIT(&self->start);
   self->start.cookie = self;
-  self->start.handler = start_source;
+  self->start.handler = __start_source;
   IV_TASK_INIT(&self->stop);
   self->stop.cookie = self;
-  self->stop.handler = stop_source;
+  self->stop.handler = __stop_source;
   return self;
 }
 
@@ -148,7 +145,8 @@ test_source_run_tests(TestSource *self)
     }
 }
 
-void test_source_finish_tc(TestSource *self)
+void
+test_source_finish_tc(TestSource *self)
 {
   if (self->current_test_case && self->current_test_case->finish)
     {

@@ -19,12 +19,18 @@ systemd_journal_get_reader_options(LogDriver *s)
   return &self->reader_options;
 }
 
+static gchar *
+__generate_persist_name(SystemdJournalSourceDriver *self)
+{
+  return g_strdup_printf("journald_source_%s_%s", self->super.super.group, self->super.super.id);
+}
+
 static gboolean
-systemd_journal_sd_init(LogPipe *s)
+__init(LogPipe *s)
 {
   SystemdJournalSourceDriver *self = (SystemdJournalSourceDriver *)s;
   GlobalConfig *cfg = log_pipe_get_config(&self->super.super.super);
-  gchar *persist_name = g_strdup_printf("journald_source_%s_%s", self->super.super.group, self->super.super.id);
+  gchar *persist_name = __generate_persist_name(self);
   self->reader = journal_reader_new(cfg, self->journald);
 
   journal_reader_options_init(&self->reader_options, cfg, self->super.super.group);
@@ -47,7 +53,7 @@ systemd_journal_sd_init(LogPipe *s)
 }
 
 static gboolean
-systemd_journal_sd_deinit(LogPipe *s)
+__deinit(LogPipe *s)
 {
   SystemdJournalSourceDriver *self = (SystemdJournalSourceDriver *)s;
   if (self->reader)
@@ -62,7 +68,7 @@ systemd_journal_sd_deinit(LogPipe *s)
 }
 
 static void
-systemd_journal_sd_free(LogPipe *s)
+__free(LogPipe *s)
 {
   SystemdJournalSourceDriver *self = (SystemdJournalSourceDriver *)s;
   journal_reader_options_destroy(&self->reader_options);
@@ -75,9 +81,9 @@ systemd_journal_sd_new(GlobalConfig *cfg)
 {
   SystemdJournalSourceDriver *self = g_new0(SystemdJournalSourceDriver, 1);
   log_src_driver_init_instance(&self->super, cfg);
-  self->super.super.super.init = systemd_journal_sd_init;
-  self->super.super.super.deinit = systemd_journal_sd_deinit;
-  self->super.super.super.free_fn = systemd_journal_sd_free;
+  self->super.super.super.init = __init;
+  self->super.super.super.deinit = __deinit;
+  self->super.super.super.free_fn = __free;
   journal_reader_options_defaults(&self->reader_options);
   self->journald = journald_new();
   return &self->super.super;

@@ -45,25 +45,29 @@ struct _MockEntry {
     gchar *cursor;
 };
 
-int journald_open(Journald *self, int flags)
+int
+journald_open(Journald *self, int flags)
 {
   self->opened = TRUE;
   return 0;
 }
 
-void journald_close(Journald *self)
+void
+journald_close(Journald *self)
 {
   self->opened = FALSE;
 }
 
-int journald_seek_head(Journald *self)
+int
+journald_seek_head(Journald *self)
 {
   g_assert(self->opened);
   self->next_element = g_list_first(self->entries);
   return 0;
 }
 
-int journald_get_cursor(Journald *self, gchar **cursor)
+int
+journald_get_cursor(Journald *self, gchar **cursor)
 {
   g_assert(self->opened);
   MockEntry *entry = (MockEntry *)self->current_pos->data;
@@ -71,7 +75,8 @@ int journald_get_cursor(Journald *self, gchar **cursor)
   return 0;
 }
 
-int journald_next(Journald *self)
+int
+journald_next(Journald *self)
 {
   g_assert(self->opened);
   self->current_pos = self->next_element;
@@ -83,14 +88,16 @@ int journald_next(Journald *self)
   return 0;
 }
 
-void journald_restart_data(Journald *self)
+void
+journald_restart_data(Journald *self)
 {
   g_assert(self->opened);
   MockEntry *entry = (MockEntry *)self->current_pos->data;
   entry->index = 0;
 }
 
-int journald_enumerate_data(Journald *self, const void **data, gsize *length)
+int
+journald_enumerate_data(Journald *self, const void **data, gsize *length)
 {
   g_assert(self->opened);
   MockEntry *entry = (MockEntry *)self->current_pos->data;
@@ -104,18 +111,19 @@ int journald_enumerate_data(Journald *self, const void **data, gsize *length)
   return 1;
 }
 
-gint
-compare_mock_entries(gconstpointer a, gconstpointer b)
+static gint
+_compare_mock_entries(gconstpointer a, gconstpointer b)
 {
   const MockEntry *entry = a;
   const gchar *cursor = b;
   return strcmp(entry->cursor, cursor);
 }
 
-int journald_seek_cursor(Journald *self, const gchar *cursor)
+int
+journald_seek_cursor(Journald *self, const gchar *cursor)
 {
   g_assert(self->opened);
-  GList *found_element = g_list_find_custom(self->entries, cursor, compare_mock_entries);
+  GList *found_element = g_list_find_custom(self->entries, cursor, _compare_mock_entries);
   if (found_element)
     {
       self->next_element = found_element;
@@ -128,13 +136,15 @@ int journald_seek_cursor(Journald *self, const gchar *cursor)
     }
 }
 
-int journald_get_fd(Journald *self)
+int
+journald_get_fd(Journald *self)
 {
   g_assert(self->opened);
   return self->fds[0];
 }
 
-int journald_process(Journald *self)
+int
+journald_process(Journald *self)
 {
   g_assert(self->opened);
   guint8 data;

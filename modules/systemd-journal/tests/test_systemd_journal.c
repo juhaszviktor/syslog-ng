@@ -34,7 +34,7 @@ static gboolean task_called;
 static gboolean poll_triggered;
 
 void
-add_mock_entry(gpointer user_data)
+add_mock_entries(gpointer user_data)
 {
   Journald *journald = user_data;
   MockEntry *entry = mock_entry_new("test_data3");
@@ -175,7 +175,7 @@ __test_fd_handling(Journald *journald)
 
   IV_TASK_INIT(&add_entry_task);
   add_entry_task.cookie = journald;
-  add_entry_task.handler = add_mock_entry;
+  add_entry_task.handler = add_mock_entries;
 
   IV_FD_INIT(&fd_to_poll);
   fd_to_poll.fd = fd;
@@ -398,7 +398,7 @@ void
 _test_timezone_init(TestCase *self, TestSource *src, Journald *journal, JournalReader *reader, JournalReaderOptions *options)
 {
   MockEntry *entry = __create_real_entry(journal, "time_zone_test");
-  options->recv_time_zone = g_strdup((gchar *)self->user_data);
+  options->recv_time_zone = g_strdup("+09:00");
   journald_mock_add_entry(journal, entry);
 }
 
@@ -455,7 +455,7 @@ test_journal_reader()
   TestCase tc_default_working = { _test_default_working_init, _test_default_working_test, NULL, NULL };
   TestCase tc_prefix = { _test_prefix_init, _test_prefix_test, NULL, "this.is.a.prefix." };
   TestCase tc_max_field_size = { _test_field_size_init, _test_field_size_test, NULL, GINT_TO_POINTER(10)};
-  TestCase tc_timezone = { _test_timezone_init, _test_timezone_test, NULL, "+09:00" };
+  TestCase tc_timezone = { _test_timezone_init, _test_timezone_test, NULL, NULL };
   TestCase tc_default_level =  { _test_default_level_init, _test_default_level_test, NULL, GINT_TO_POINTER(LOG_ERR) };
   TestCase tc_default_facility = { _test_default_facility_init, _test_default_facility_test, NULL, GINT_TO_POINTER(LOG_AUTH) };
 

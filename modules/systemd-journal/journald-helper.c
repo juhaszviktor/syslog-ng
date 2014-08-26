@@ -21,15 +21,15 @@
  *
  */
 
-#include "journald-helper.h"
+#include "journald-subsystem.h"
 
 #include <string.h>
 
 #define SD_JOURNAL_FOREACH_DATA(j, data, l)                             \
         for (journald_restart_data(j); journald_enumerate_data((j), &(data), &(l)) > 0; )
 
-void
-journald_parse_data(gchar *data, size_t length, gchar **key, gchar **value)
+static void
+__parse_data(gchar *data, size_t length, gchar **key, gchar **value)
 {
   gchar *pos = strchr(data, '=');
   if (pos)
@@ -53,7 +53,7 @@ void journald_foreach_data(Journald *self, FOREACH_DATA_CALLBACK func, gpointer 
   {
     gchar *key;
     gchar *value;
-    journald_parse_data((gchar *)data, l, &key, &value);
+    __parse_data((gchar *)data, l, &key, &value);
     func(key, value, user_data);
     g_free(key);
     g_free(value);
