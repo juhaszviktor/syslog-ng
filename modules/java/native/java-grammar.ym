@@ -38,7 +38,7 @@
 %name-prefix "java_"
 %lex-param {CfgLexer *lexer}
 %parse-param {CfgLexer *lexer}
-%parse-param {LogDriver **instance}
+%parse-param {gpointer **instance}
 %parse-param {gpointer arg}
 
 
@@ -57,6 +57,11 @@ start
             last_driver = *instance = java_dd_new(configuration);
           }
           '(' java_dest_options ')'		{ YYACCEPT; }
+        | LL_CONTEXT_FILTER KW_JAVA
+          {
+            *instance = java_filter_new(configuration);
+            YYACCEPT;
+          }
         ;
 
 java_dest_options

@@ -23,8 +23,9 @@
 
 #include "cfg-parser.h"
 #include "java-grammar.h"
+#include "filter/filter-expr.h"
 
-int java_parse(CfgLexer *lexer, LogDriver **instance, gpointer arg);
+int java_parse(CfgLexer *lexer, gpointer **instance, gpointer arg);
 
 static CfgLexerKeyword java_keywords[] = {
   { "java",        KW_JAVA },
