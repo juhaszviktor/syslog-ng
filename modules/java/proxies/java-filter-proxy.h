@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2014 BalaBit IT Ltd, Budapest, Hungary
- * Copyright (c) 2014 Viktor Juhasz <viktor.juhasz@balabit.com>
+ * Copyright (c) 2010-2014 BalaBit IT Ltd, Budapest, Hungary
+ * Copyright (c) 2010-2014 Viktor Juhasz <viktor.juhasz@balabit.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -21,27 +21,26 @@
  *
  */
 
-#include "cfg-parser.h"
-#include "java-grammar.h"
+#ifndef JAVA_FILTER_PROXY_H_
+#define JAVA_Filter_PROXY_H_
+
+#include <jni.h>
+#include <syslog-ng.h>
 #include "filter/filter-expr.h"
+#include "java_machine.h"
 
-int java_parse(CfgLexer *lexer, gpointer **instance, gpointer arg);
+typedef struct _JavaFilterProxy JavaFilterProxy;
 
-static CfgLexerKeyword java_keywords[] = {
-  { "java",        KW_JAVA },
-  { "class_path",  KW_CLASS_PATH},
-  { "class_name",  KW_CLASS_NAME},
-  { "option",      KW_OPTION},
-  { "retries",     KW_RETRIES},
-  { NULL }
-};
+JavaFilterProxy* java_filter_proxy_new(const gchar *class_name, const gchar *class_path, gpointer handle);
+void java_filter_set_class_path(FilterExprNode *s, const gchar *class_path);
+void java_filter_set_class_name(FilterExprNode *s, const gchar *class_name);
 
-CfgParser java_parser =
-  {
-    .name = "java",
-    .keywords = java_keywords,
-    .parse = (int (*)(CfgLexer *lexer, gpointer *instance, gpointer)) java_parse,
-    .cleanup = (void (*)(gpointer)) log_pipe_unref,
-  };
+gboolean java_filter_proxy_init(JavaFilterProxy *self);
+gboolean java_filter_proxy_eval(JavaFilterProxy *self, LogMessage *msg);
 
-CFG_PARSER_IMPLEMENT_LEXER_BINDING(java_, gpointer **)
+// WTF?
+//void java_filter_proxy_set_env(JavaFilterProxy *self, JNIEnv *env);
+
+void java_filter_proxy_free(JavaFilterProxy *self);
+
+#endif
