@@ -37,7 +37,7 @@ filter_expr_node_init_instance(FilterExprNode *self)
 
 /*
  * In case the filter would modify the message the caller has to make sure
- * that the message is writable.  You can always archieve that with
+ * that the message is writable.  You can always achieve that with
  * filter_expr_eval_root() below, but you have to be on a processing path to
  * do that.
  */
