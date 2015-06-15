@@ -34,7 +34,7 @@ public abstract class StructuredLogDestination extends LogDestination {
 			return send(msg);
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 			return false;
 		}
 		finally {

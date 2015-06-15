@@ -23,9 +23,6 @@
 
 package org.syslog_ng;
 
-import java.io.StringWriter;
-import java.io.PrintWriter;
-
 import org.syslog_ng.InternalMessageSender;
 
 public abstract class LogPipe {
@@ -47,23 +44,12 @@ public abstract class LogPipe {
 	protected abstract boolean init();
 	protected abstract void deinit();
 
-	protected String getStackTrace(Exception e) {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		e.printStackTrace(pw);
-		return sw.toString();
-	}
-
-	protected void sendExceptionMessage(Exception e) {
-		InternalMessageSender.error("Exception occured: " + getStackTrace(e));
-	}
-
 	public boolean initProxy() {
 		try {
 			return init();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 			return false;
 		}
 	}
@@ -73,12 +59,13 @@ public abstract class LogPipe {
 			deinit();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 		}
 	}
 
 	public long getHandle() {
 		return pipeHandle;
 	}
+
 	private native long getConfigHandle(long ptr);
 }

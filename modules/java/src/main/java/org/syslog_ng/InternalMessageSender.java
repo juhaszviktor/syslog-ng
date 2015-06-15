@@ -24,6 +24,9 @@
 
 package org.syslog_ng;
 
+import java.io.StringWriter;
+import java.io.PrintWriter;
+
 public class InternalMessageSender {
   private static final int MsgFatal = 2;
   private static final int MsgError = 3;
@@ -39,11 +42,11 @@ public class InternalMessageSender {
   public static void error(String message) {
     createInternalMessage(MsgError, message);
   }
-  
+
   public static void warning(String message) {
     createInternalMessage(MsgWarning, message);
   }
-  
+
   public static void notice(String message) {
     createInternalMessage(MsgNotice, message);
   }
@@ -51,10 +54,21 @@ public class InternalMessageSender {
   public static void info(String message) {
     createInternalMessage(MsgInfo, message);
   }
-  
+
   public static void debug(String message) {
     createInternalMessage(MsgDebug, message);
   }
-  
+
+  public static String getStackTrace(Exception e) {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    return sw.toString();
+  }
+
+  public static void sendExceptionMessage(Exception e) {
+    error("Exception occured: " + getStackTrace(e));
+  }
+
   private native static void createInternalMessage(int level, String message);
 };

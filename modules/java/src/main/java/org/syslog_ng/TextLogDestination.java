@@ -34,7 +34,7 @@ public abstract class TextLogDestination extends LogDestination {
 			return send(formattedMessage);
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 			return false;
 		}
 	}

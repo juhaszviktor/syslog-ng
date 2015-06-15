@@ -58,7 +58,7 @@ public abstract class LogDestination extends LogPipe {
 			return open();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 			return false;
 		}
 	}
@@ -68,7 +68,7 @@ public abstract class LogDestination extends LogPipe {
 			close();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 		}
 	}
 
@@ -77,7 +77,7 @@ public abstract class LogDestination extends LogPipe {
 			return isOpened();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 			return false;
 		}
 	}
@@ -87,7 +87,7 @@ public abstract class LogDestination extends LogPipe {
 			onMessageQueueEmpty();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 		}
 	}
 
