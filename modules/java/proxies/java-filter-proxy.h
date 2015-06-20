@@ -22,7 +22,7 @@
  */
 
 #ifndef JAVA_FILTER_PROXY_H_
-#define JAVA_Filter_PROXY_H_
+#define JAVA_FILTER_PROXY_H_
 
 #include <jni.h>
 #include <syslog-ng.h>
