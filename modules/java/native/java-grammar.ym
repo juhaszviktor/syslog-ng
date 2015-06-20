@@ -23,7 +23,7 @@
 
 %code requires {
 
-#include "java-parser.h"
+#include "modjava-parser.h"
 
 }
 

@@ -23,7 +23,7 @@
 
 #include <jni.h>
 
-#include "java-parser.h"
+#include "modjava-parser.h"
 #include "plugin.h"
 #include "messages.h"
 #include "misc.h"
