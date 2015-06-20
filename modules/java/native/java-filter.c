@@ -63,7 +63,7 @@ Java_org_syslog_1ng_FilterExprNode_getOption(JNIEnv *env, jobject obj, jlong s, 
 }
 
 void
-java_filter_set_option(FilterExprNode *s, gchar* key, gchar* value)
+java_filter_set_option(FilterExprNode *s, const gchar* key, const gchar* value)
 {
     JavaFilter *self = (JavaFilter*) s;
     gchar *normalized_key = __normalize_key(key);

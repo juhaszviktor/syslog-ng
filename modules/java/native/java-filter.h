@@ -4,7 +4,7 @@
 #include "filter/filter-expr.h"
 #include "proxies/java-filter-proxy.h"
 
-typedef struct _JavaFilter
+typedef struct
 {
     FilterExprNode super;
     JavaFilterProxy *proxy;
@@ -16,6 +16,6 @@ typedef struct _JavaFilter
 FilterExprNode* java_filter_new();
 void java_filter_set_class_path(FilterExprNode *s, const gchar *class_path);
 void java_filter_set_class_name(FilterExprNode *s, const gchar *class_name);
-void java_filter_set_option(FilterExprNode *s, gchar* key, gchar* value);
+void java_filter_set_option(FilterExprNode *s, const gchar* key, const gchar* value);
 
 #endif
