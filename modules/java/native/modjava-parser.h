@@ -28,6 +28,7 @@
 #include "cfg-lexer.h"
 #include "java-destination.h"
 #include "java-filter.h"
+#include "java-parser.h"
 
 extern CfgParser java_parser;
 

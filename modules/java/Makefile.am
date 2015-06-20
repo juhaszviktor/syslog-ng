@@ -58,6 +58,8 @@ modules_java_libmod_java_la_SOURCES = \
     modules/java/native/java-destination.h \
     modules/java/native/java-filter.h \
     modules/java/native/java-filter.c \
+    modules/java/native/java-parser.c \
+    modules/java/native/java-parser.h \
     modules/java/proxies/java-destination-proxy.c \
     modules/java/proxies/java-destination-proxy.h \
     modules/java/proxies/java-logmsg-proxy.c \

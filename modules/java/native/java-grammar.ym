@@ -51,8 +51,9 @@
 %token KW_RETRIES
 
 %type <ptr> java
-%type <ptr> java_filter
 %type <ptr> java_dest
+%type <ptr> java_filter
+%type <ptr> java_parser
 
 %%
 
@@ -67,7 +68,45 @@ start
 java
         : LL_CONTEXT_DESTINATION java_dest { $$ = $2; }
         | LL_CONTEXT_FILTER java_filter { $$ = $2; }
+        | LL_CONTEXT_PARSER java_parser { $$ = $2; }
         ;
+
+java_parser
+        : KW_JAVA
+          {
+            last_parser = *instance = java_parser_new(configuration);
+          }
+          '(' java_parser_options ')'
+          {
+            $$ = last_parser;
+          }
+
+java_parser_options
+        : java_parser_option java_parser_options
+        |
+        ;
+
+java_parser_option
+        : KW_CLASS_PATH '(' string ')'
+          {
+            java_parser_set_class_path(last_parser, $3);
+            free($3);
+          }
+        | KW_CLASS_NAME '(' string ')'
+          {
+            java_parser_set_class_name(last_parser, $3);
+            free($3);
+          }
+        | KW_OPTION '(' java_parser_custom_options ')'
+        ;
+
+java_parser_custom_options
+  : java_parser_custom_option java_parser_custom_options
+  |
+  ;
+
+java_parser_custom_option
+  : LL_STRING LL_STRING { java_parser_set_option(last_parser, $1, $2); free($1); free($2); }
 
 java_filter
         : KW_JAVA
@@ -123,12 +162,12 @@ java_dest_options
 java_dest_option
         : KW_CLASS_PATH '(' string ')'
           {
-          	java_dd_set_class_path(last_driver, $3);
+            java_dd_set_class_path(last_driver, $3);
             free($3);
           }
         | KW_CLASS_NAME '(' string ')'
           {
-          	java_dd_set_class_name(last_driver, $3);
+            java_dd_set_class_name(last_driver, $3);
             free($3);
           }
         | KW_TEMPLATE '(' string ')' { java_dd_set_template_string(last_driver, $3); free($3); }
