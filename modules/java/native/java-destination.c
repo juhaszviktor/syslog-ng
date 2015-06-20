@@ -22,6 +22,7 @@
  */
 
 #include "java-destination.h"
+#include "java-helpers.h"
 #include "messages.h"
 #include "stats/stats.h"
 #include "logqueue.h"

@@ -21,6 +21,7 @@
  */
 
 #include "java-filter.h"
+#include "java-helpers.h"
 #include "logmsg.h"
 
 static gboolean
@@ -33,25 +34,6 @@ java_filter_eval(FilterExprNode *s, LogMessage **msg, gint num_msg)
     java_machine_detach_thread();
 
     return result;
-}
-
-
-// TODO: ez duplikatum
-static gchar *
-__normalize_key(const gchar *buffer)
-{
-    const gchar from = '-';
-    const gchar to = '_';
-    gchar *p;
-    gchar *normalized_key = g_strdup(buffer);
-    p = normalized_key;
-    while (*p)
-    {
-        if (*p == from)
-            *p = to;
-        p++;
-    }
-    return normalized_key;
 }
 
 JNIEXPORT jstring JNICALL
