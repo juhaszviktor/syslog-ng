@@ -23,6 +23,7 @@
 #include "java-filter-proxy.h"
 #include "java-logmsg-proxy.h"
 #include "java-class-loader.h"
+#include "java-helpers.h"
 #include "messages.h"
 #include <string.h>
 
@@ -41,21 +42,6 @@ struct _JavaFilterProxy
   jclass loaded_class;
   JavaFilterImpl filter_impl;
 };
-
-static inline gboolean
-__load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_name, const gchar *signature, jmethodID *method_id)
-{
-  *method_id = CALL_JAVA_FUNCTION(java_env, GetMethodID, loaded_class, method_name, signature);
-  if (!*method_id)
-    {
-      msg_error("Can't find method in class",
-                evt_tag_str("method", method_name),
-                evt_tag_str("signature", signature),
-                NULL);
-      return FALSE;
-    }
-  return TRUE;
-}
 
 static gboolean
 __load_filter_object(JavaFilterProxy *self, const gchar *class_name, const gchar *class_path, gpointer handle)

@@ -26,5 +26,6 @@
 #include "java_machine.h"
 
 gchar * __normalize_key(const gchar *buffer);
+gboolean __load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_name, const gchar *signature, jmethodID *method_id);
 
 #endif

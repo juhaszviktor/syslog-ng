@@ -21,6 +21,7 @@
  */
 
 #include "java-helpers.h"
+#include "messages.h"
 
 gchar*
 __normalize_key(const gchar *buffer)
@@ -39,3 +40,17 @@ __normalize_key(const gchar *buffer)
   return normalized_key;
 }
 
+inline gboolean
+__load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_name, const gchar *signature, jmethodID *method_id)
+{
+  *method_id = CALL_JAVA_FUNCTION(java_env, GetMethodID, loaded_class, method_name, signature);
+  if (!*method_id)
+    {
+      msg_error("Can't find method in class",
+                evt_tag_str("method", method_name),
+                evt_tag_str("signature", signature),
+                NULL);
+      return FALSE;
+    }
+  return TRUE;
+}
