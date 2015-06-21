@@ -39,7 +39,6 @@ public class RandomFilter extends FilterExprNode {
     public boolean eval(LogMessage msg) {
         InternalMessageSender.debug("Evaluating filter in Java");
         InternalMessageSender.debug("Name option: " + getOption("name"));
-        msg.release();
 
         return random.nextBoolean();
     }
