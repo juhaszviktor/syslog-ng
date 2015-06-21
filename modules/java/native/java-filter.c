@@ -103,8 +103,6 @@ java_filter_init(FilterExprNode *s, GlobalConfig *cfg)
     JavaFilter *self = (JavaFilter*) s;
 
 
-    msg_debug("Init java filter", evt_tag_str("class_path", self->class_path->str), NULL);
-    msg_debug("Init java filter", evt_tag_str("class_name", self->class_name), NULL);
     self->proxy = java_filter_proxy_new(self->class_name, self->class_path->str, self);
 
     // TODO: kivezetni a cfg-t javaba
