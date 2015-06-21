@@ -95,6 +95,7 @@ java_filter_free(FilterExprNode *s)
 
     g_free(self->class_name);
     g_string_free(self->class_path, TRUE);
+    g_hash_table_unref(self->options);
 }
 
 void
