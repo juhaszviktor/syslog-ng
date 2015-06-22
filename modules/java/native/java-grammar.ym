@@ -98,6 +98,7 @@ java_parser_option
             free($3);
           }
         | KW_OPTION '(' java_parser_custom_options ')'
+        | parser_opt
         ;
 
 java_parser_custom_options
