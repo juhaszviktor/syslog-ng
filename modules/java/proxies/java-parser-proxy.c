@@ -84,12 +84,20 @@ java_parser_proxy_process(JavaParserProxy *self, LogMessage *msg, const gchar *i
       return FALSE;
     }
 
+  jstring jinput = CALL_JAVA_FUNCTION(env, NewStringUTF, input);
+  if (!jinput)
+    {
+      return FALSE;
+    }
+
   result = CALL_JAVA_FUNCTION(env,
                               CallBooleanMethod,
                               self->parser_impl.parser_object,
                               self->parser_impl.mi_process,
-                              java_log_message_proxy_get_java_object(jmsg));
+                              java_log_message_proxy_get_java_object(jmsg),
+                              jinput);
 
+  CALL_JAVA_FUNCTION(env, DeleteLocalRef, jinput);
   java_log_message_proxy_free(jmsg);
 
   return !!(result);
