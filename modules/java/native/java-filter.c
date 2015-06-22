@@ -47,7 +47,7 @@ Java_org_syslog_1ng_FilterExprNode_getOption(JNIEnv *env, jobject obj, jlong s, 
         return NULL;
     }
 
-    gchar *normalized_key = __normalize_key(key_str);
+    gchar *normalized_key = normalize_key(key_str);
     value = g_hash_table_lookup(self->options, normalized_key);
     (*env)->ReleaseStringUTFChars(env, key, key_str);
     g_free(normalized_key);
@@ -66,7 +66,7 @@ void
 java_filter_set_option(FilterExprNode *s, const gchar* key, const gchar* value)
 {
     JavaFilter *self = (JavaFilter*) s;
-    gchar *normalized_key = __normalize_key(key);
+    gchar *normalized_key = normalize_key(key);
     g_hash_table_insert(self->options, normalized_key, g_strdup(value));
 }
 

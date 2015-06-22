@@ -24,7 +24,7 @@
 #include "messages.h"
 
 gchar*
-__normalize_key(const gchar *buffer)
+normalize_key(const gchar *buffer)
 {
   const gchar from = '-';
   const gchar to = '_';
@@ -41,7 +41,7 @@ __normalize_key(const gchar *buffer)
 }
 
 inline gboolean
-__load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_name, const gchar *signature, jmethodID *method_id)
+load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_name, const gchar *signature, jmethodID *method_id)
 {
   *method_id = CALL_JAVA_FUNCTION(java_env, GetMethodID, loaded_class, method_name, signature);
   if (!*method_id)

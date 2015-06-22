@@ -57,9 +57,9 @@ __load_filter_object(JavaFilterProxy *self, const gchar *class_name, const gchar
       return FALSE;
   }
 
-  result &= __load_class_method(java_env, self->loaded_class, "<init>", "(J)V", &self->filter_impl.mi_constructor);
-  result &= __load_class_method(java_env, self->loaded_class, "initProxy", "()Z", &self->filter_impl.mi_init);
-  result &= __load_class_method(java_env, self->loaded_class, "evalProxy", "(Lorg/syslog_ng/LogMessage;)Z", &self->filter_impl.mi_eval);
+  result &= load_class_method(java_env, self->loaded_class, "<init>", "(J)V", &self->filter_impl.mi_constructor);
+  result &= load_class_method(java_env, self->loaded_class, "initProxy", "()Z", &self->filter_impl.mi_init);
+  result &= load_class_method(java_env, self->loaded_class, "evalProxy", "(Lorg/syslog_ng/LogMessage;)Z", &self->filter_impl.mi_eval);
 
   self->filter_impl.filter_object = CALL_JAVA_FUNCTION(java_env, NewObject, self->loaded_class, self->filter_impl.mi_constructor, handle);
   if (!self->filter_impl.filter_object)
