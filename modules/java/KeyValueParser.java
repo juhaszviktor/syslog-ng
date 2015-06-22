@@ -28,7 +28,16 @@ public class KeyValueParser extends LogParser {
         super(pipeHandle);
     }
 
+    public void deinit() {
+        InternalMessageSender.debug("Deinit");
+    }
 
+    public boolean init() {
+        InternalMessageSender.debug("Init");
+        return true;
+    }
+
+    @Override
     public boolean process(LogMessage msg, String input) {
         String[] entries = input.split(",");
         for (String entry : entries) {
