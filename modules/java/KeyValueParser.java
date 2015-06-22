@@ -33,7 +33,7 @@ public class KeyValueParser extends LogParser {
     }
 
     public boolean init() {
-        InternalMessageSender.debug("Init");
+        InternalMessageSender.debug("Init: " + getOption("name"));
         return true;
     }
 
