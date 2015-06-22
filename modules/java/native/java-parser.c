@@ -33,6 +33,32 @@ __clone_options(GHashTable *src, GHashTable *dest) {
   g_hash_table_foreach(src, __copy_hash_table_iterator, dest);
 }
 
+JNIEXPORT jstring JNICALL
+Java_org_syslog_1ng_LogParser_getOption(JNIEnv *env, jobject obj, jlong s, jstring key)
+{
+    JavaParser *self = (JavaParser *)s;
+    gchar *value;
+    const char *key_str = (*env)->GetStringUTFChars(env, key, NULL);
+    if (key_str == NULL)
+    {
+        return NULL;
+    }
+
+    gchar *normalized_key = normalize_key(key_str);
+    value = g_hash_table_lookup(self->options, normalized_key);
+    (*env)->ReleaseStringUTFChars(env, key, key_str);
+    g_free(normalized_key);
+
+    if (value)
+    {
+        return (*env)->NewStringUTF(env, value);
+    }
+    else
+    {
+      return NULL;
+    }
+}
+
 void java_parser_set_option(LogParser *s, const gchar *key, const gchar *value)
 {
   JavaParser *self = (JavaParser *)s;
