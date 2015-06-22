@@ -60,7 +60,7 @@ __load_parser_object(JavaParserProxy *self, const gchar *class_name, const gchar
 
   result &= load_class_method(java_env, self->loaded_class, "<init>", "(J)V", &self->parser_impl.mi_constructor);
   result &= load_class_method(java_env, self->loaded_class, "initProxy", "()Z", &self->parser_impl.mi_init);
-  result &= load_class_method(java_env, self->loaded_class, "processProxy", "(Lorg/syslog_ng/LogMessage;)Z", &self->parser_impl.mi_process);
+  result &= load_class_method(java_env, self->loaded_class, "processProxy", "(Lorg/syslog_ng/LogMessage;Ljava/lang/String;)Z", &self->parser_impl.mi_process);
 
   self->parser_impl.parser_object = CALL_JAVA_FUNCTION(java_env, NewObject, self->loaded_class, self->parser_impl.mi_constructor, handle);
   if (!self->parser_impl.parser_object)
