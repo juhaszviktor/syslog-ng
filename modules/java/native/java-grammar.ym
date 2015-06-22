@@ -48,7 +48,6 @@
 %token KW_CLASS_PATH
 %token KW_CLASS_NAME
 %token KW_OPTION
-%token KW_RETRIES
 
 %type <ptr> java
 %type <ptr> java_dest
