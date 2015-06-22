@@ -28,10 +28,9 @@
 #include "cfg-lexer.h"
 #include "java-destination.h"
 #include "java-filter.h"
-#include "filter/filter-expr.h"
 
 extern CfgParser java_parser;
 
-CFG_PARSER_DECLARE_LEXER_BINDING(java_, gpointer **)
+CFG_PARSER_DECLARE_LEXER_BINDING(java_, gpointer *)
 
 #endif

@@ -38,7 +38,7 @@
 %name-prefix "java_"
 %lex-param {CfgLexer *lexer}
 %parse-param {CfgLexer *lexer}
-%parse-param {gpointer **instance}
+%parse-param {gpointer *instance}
 %parse-param {gpointer arg}
 
 
@@ -88,12 +88,12 @@ java_filter_options
 java_filter_option
         : KW_CLASS_PATH '(' string ')'
           {
-            java_filter_set_class_path(*instance, $3);
+            java_filter_set_class_path((FilterExprNode *) *instance, $3);
             free($3);
           }
         | KW_CLASS_NAME '(' string ')'
           {
-            java_filter_set_class_name(*instance, $3);
+            java_filter_set_class_name((FilterExprNode *) *instance, $3);
             free($3);
           }
         | KW_OPTION '(' java_filter_custom_options ')'
@@ -105,7 +105,7 @@ java_filter_custom_options
   ;
 
 java_filter_custom_option
-  : LL_STRING LL_STRING { java_filter_set_option(*instance, $1, $2); free($1); free($2); }
+  : LL_STRING LL_STRING { java_filter_set_option((FilterExprNode *) *instance, $1, $2); free($1); free($2); }
 
 java_dest
         : KW_JAVA

@@ -23,9 +23,8 @@
 
 #include "cfg-parser.h"
 #include "java-grammar.h"
-#include "filter/filter-expr.h"
 
-int java_parse(CfgLexer *lexer, gpointer **instance, gpointer arg);
+int java_parse(CfgLexer *lexer, gpointer *instance, gpointer arg);
 
 static CfgLexerKeyword java_keywords[] = {
   { "java",        KW_JAVA },
@@ -44,4 +43,4 @@ CfgParser java_parser =
     .cleanup = (void (*)(gpointer)) log_pipe_unref,
   };
 
-CFG_PARSER_IMPLEMENT_LEXER_BINDING(java_, gpointer **)
+CFG_PARSER_IMPLEMENT_LEXER_BINDING(java_, gpointer *)
