@@ -73,7 +73,10 @@ java_parser_process(LogParser *s, LogMessage **pmsg, const LogPathOptions *path_
   JavaParser *self = (JavaParser *)s;
   LogMessage *msg = log_msg_make_writable(pmsg, path_options);
 
-  return java_parser_proxy_process(self->proxy, msg, input, input_len);
+  gboolean result = java_parser_proxy_process(self->proxy, msg, input, input_len);
+  java_machine_detach_thread();
+
+  return result;
 };
 
 static LogPipe *
