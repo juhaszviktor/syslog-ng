@@ -39,9 +39,11 @@ public class KeyValueParser extends LogParser {
 
     @Override
     public boolean process(LogMessage msg, String input) {
+        InternalMessageSender.debug(input);
         String[] entries = input.split(",");
         for (String entry : entries) {
             String[] keyValue = entry.split("=");
+            InternalMessageSender.debug("Key: " + keyValue[0] + ", Value: " + keyValue[1]);
             msg.setValue(keyValue[0], keyValue[1]);
         }
         return true;
