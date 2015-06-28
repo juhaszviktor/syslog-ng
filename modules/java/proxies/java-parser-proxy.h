@@ -25,7 +25,6 @@
 
 #include <jni.h>
 #include <syslog-ng.h>
-#include <template/templates.h>
 #include "java_machine.h"
 
 typedef struct _JavaParserProxy JavaParserProxy;
