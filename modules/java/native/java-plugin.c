@@ -52,6 +52,11 @@ static Plugin java_plugins[] =
     .name = "java",
     .parser = &java_parser,
   },
+  {
+    .type = LL_CONTEXT_REWRITE,
+    .name = "java",
+    .parser = &java_parser,
+  },
 };
 
 gboolean
@@ -65,7 +70,7 @@ const ModuleInfo module_info =
 {
   .canonical_name = "java",
   .version = VERSION,
-  .description = "The java module provides Java destination support for syslog-ng.",
+  .description = "The java module provides Java extension support for syslog-ng.",
   .core_revision = "Dummy Revision",
   .plugins = java_plugins,
   .plugins_len = G_N_ELEMENTS(java_plugins),

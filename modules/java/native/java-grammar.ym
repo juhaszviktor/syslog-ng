@@ -55,6 +55,7 @@ FilterExprNode *last_filter;
 %type <ptr> java_dest
 %type <ptr> java_filter
 %type <ptr> java_parser
+%type <ptr> java_rewrite
 
 %%
 
@@ -70,7 +71,46 @@ java
         : LL_CONTEXT_DESTINATION java_dest { $$ = $2; }
         | LL_CONTEXT_FILTER java_filter { $$ = $2; }
         | LL_CONTEXT_PARSER java_parser { $$ = $2; }
+        | LL_CONTEXT_REWRITE java_rewrite { $$ = $2; }
         ;
+
+java_rewrite
+        : KW_JAVA
+          {
+            *instance = last_rewrite = java_rewrite_new(configuration);
+          }
+          '(' java_rewrite_options ')'
+          {
+            $$ = *instance;
+          }
+
+java_rewrite_options
+        : java_rewrite_option java_rewrite_options
+        |
+        ;
+
+java_rewrite_option
+        : KW_CLASS_PATH '(' string ')'
+          {
+            java_rewrite_set_class_path(last_rewrite, $3);
+            free($3);
+          }
+        | KW_CLASS_NAME '(' string ')'
+          {
+            java_rewrite_set_class_name(last_rewrite, $3);
+            free($3);
+          }
+        | KW_OPTION '(' java_rewrite_custom_options ')'
+        | rewrite_condition_opt
+        ;
+
+java_rewrite_custom_options
+  : java_rewrite_custom_option java_rewrite_custom_options
+  |
+  ;
+
+java_rewrite_custom_option
+  : LL_STRING LL_STRING { java_rewrite_set_option(last_rewrite, $1, $2); free($1); free($2); }
 
 java_parser
         : KW_JAVA

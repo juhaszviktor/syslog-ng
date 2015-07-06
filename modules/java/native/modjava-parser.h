@@ -29,6 +29,7 @@
 #include "java-destination.h"
 #include "java-filter.h"
 #include "java-parser.h"
+#include "java-rewrite.h"
 
 extern CfgParser java_parser;
 

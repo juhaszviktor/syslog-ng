@@ -95,6 +95,15 @@ Java_org_syslog_1ng_LogMessage_setValue(JNIEnv *env, jobject obj, jlong handle, 
   (*env)->ReleaseStringUTFChars(env, value, value_str);
 }
 
+JNIEXPORT void JNICALL
+Java_org_syslog_1ng_LogMessage_setTagById(JNIEnv *env, jobject obj, jlong msg_handle, jlong tag_handle, jboolean on)
+{
+  LogMessage *msg = (LogMessage *)msg_handle;
+  LogTagId tag_id = (LogTagId)tag_handle;
+
+  log_msg_set_tag_by_id_onoff(msg, tag_id, (gboolean)on);
+}
+
 static gboolean
 __load_object(JavaLogMessageProxy *self)
 {
