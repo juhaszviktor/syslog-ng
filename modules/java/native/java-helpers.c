@@ -54,3 +54,13 @@ load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_nam
     }
   return TRUE;
 }
+
+static inline void
+__copy_hash_table_iterator(gpointer key, gpointer val, gpointer dest){
+  g_hash_table_insert((GHashTable*) dest, key, val);
+}
+
+void
+clone_java_options(GHashTable *src, GHashTable *dest) {
+  g_hash_table_foreach(src, __copy_hash_table_iterator, dest);
+}

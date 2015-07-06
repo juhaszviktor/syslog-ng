@@ -23,16 +23,6 @@
 #include "java-parser.h"
 #include "java-helpers.h"
 
-static inline void
-__copy_hash_table_iterator(gpointer key, gpointer val, gpointer dest){
-  g_hash_table_insert((GHashTable*) dest, key, val);
-}
-
-static void
-__clone_options(GHashTable *src, GHashTable *dest) {
-  g_hash_table_foreach(src, __copy_hash_table_iterator, dest);
-}
-
 JNIEXPORT jstring JNICALL
 Java_org_syslog_1ng_LogParser_getOption(JNIEnv *env, jobject obj, jlong s, jstring key)
 {
@@ -116,7 +106,7 @@ java_parser_clone(LogPipe *s)
   g_free(cloned->class_name);
   cloned->class_name = g_strdup(self->class_name);
   g_string_assign(cloned->class_path, self->class_path->str);
-  __clone_options(self->options, cloned->options);
+  clone_java_options(self->options, cloned->options);
 
   return &cloned->super.super;
 };
