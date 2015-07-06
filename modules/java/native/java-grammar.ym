@@ -33,6 +33,8 @@
 #include "cfg-grammar.h"
 #include "plugin.h"
 
+FilterExprNode *last_filter;
+
 }
 
 %name-prefix "java_"
@@ -111,7 +113,7 @@ java_parser_custom_option
 java_filter
         : KW_JAVA
           {
-            *instance = java_filter_new(configuration);
+            *instance = last_filter = java_filter_new(configuration);
           }
           '(' java_filter_options ')'
           {
@@ -127,12 +129,12 @@ java_filter_options
 java_filter_option
         : KW_CLASS_PATH '(' string ')'
           {
-            java_filter_set_class_path((FilterExprNode *) *instance, $3);
+            java_filter_set_class_path(last_filter, $3);
             free($3);
           }
         | KW_CLASS_NAME '(' string ')'
           {
-            java_filter_set_class_name((FilterExprNode *) *instance, $3);
+            java_filter_set_class_name(last_filter, $3);
             free($3);
           }
         | KW_OPTION '(' java_filter_custom_options ')'
@@ -144,7 +146,7 @@ java_filter_custom_options
   ;
 
 java_filter_custom_option
-  : LL_STRING LL_STRING { java_filter_set_option((FilterExprNode *) *instance, $1, $2); free($1); free($2); }
+  : LL_STRING LL_STRING { java_filter_set_option(last_filter, $1, $2); free($1); free($2); }
 
 java_dest
         : KW_JAVA
