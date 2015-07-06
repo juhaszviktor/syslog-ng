@@ -151,6 +151,8 @@ static CfgLexerKeyword main_keywords[] = {
 
   { "retries",            KW_RETRIES, 0x0303 },
 
+  { "condition",          KW_CONDITION, 0x0302 },
+
   /* filter items */
   { "type",               KW_TYPE, 0x0300 },
   { "tags",               KW_TAGS, 0x0300 },

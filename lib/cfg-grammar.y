@@ -53,6 +53,7 @@ extern struct _FilePermOptions *last_file_perm_options;
 extern struct _MsgFormatOptions *last_msg_format_options;
 extern struct _LogDriver *last_driver;
 extern struct _LogParser *last_parser;
+extern struct _LogRewrite *last_rewrite;
 extern struct _LogTemplateOptions *last_template_options;
 extern struct _LogTemplate *last_template;
 extern struct _ValuePairs *last_value_pairs;
@@ -291,6 +292,7 @@ extern struct _StatsOptions *last_stats_options;
 /* misc options */
 
 %token KW_USE_TIME_RECVD              10340
+%token KW_CONDITION
 
 /* filter items*/
 %token KW_FACILITY                    10350
@@ -381,6 +383,7 @@ extern struct _StatsOptions *last_stats_options;
 
 LogDriver *last_driver;
 LogParser *last_parser;
+LogRewrite *last_rewrite;
 LogSourceOptions *last_source_options;
 LogProtoServerOptions *last_proto_server_options;
 LogReaderOptions *last_reader_options;
@@ -1277,6 +1280,16 @@ vp_rekey_option
 	| KW_ADD_PREFIX '(' string ')' { value_pairs_transform_set_add_func(last_vp_transset, value_pairs_new_transform_add_prefix($3)); free($3); }
 	| KW_REPLACE_PREFIX '(' string string ')' { value_pairs_transform_set_add_func(last_vp_transset, value_pairs_new_transform_replace_prefix($3, $4)); free($3); free($4); }
 	;
+
+rewrite_condition_opt
+        : KW_CONDITION '('
+          {
+            FilterExprNode *filter_expr;
+
+            CHECK_ERROR_WITHOUT_MESSAGE(cfg_parser_parse(&filter_expr_parser, lexer, (gpointer *) &filter_expr, NULL), @1);
+            log_rewrite_set_condition(last_rewrite, filter_expr);
+          } ')'
+        ;
 
 /* END_RULES */
 
