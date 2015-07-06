@@ -111,8 +111,9 @@ java_parser_clone(LogPipe *s)
   JavaParser *self = (JavaParser *) s;
 
   JavaParser *cloned = (JavaParser *) java_parser_new(log_pipe_get_config(&self->super.super));
-  cloned->super.template = log_template_ref(self->super.template);
 
+  cloned->super.template = log_template_ref(self->super.template);
+  g_free(cloned->class_name);
   cloned->class_name = g_strdup(self->class_name);
   g_string_assign(cloned->class_path, self->class_path->str);
   __clone_options(self->options, cloned->options);
