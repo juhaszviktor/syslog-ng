@@ -20,24 +20,21 @@
  *
  */
 
-#ifndef JAVA_FILTER_H_INCLUDED
-#define JAVA_FILTER_H_INCLUDED
-
-#include "filter/filter-expr.h"
-#include "proxies/java-filter-proxy.h"
+#ifndef JAVA_OPTIONS_H_INCLUDED
+#define JAVA_OPTIONS_H_INCLUDED
 
 typedef struct
 {
-    FilterExprNode super;
-    JavaFilterProxy *proxy;
     GString *class_path;
     gchar *class_name;
     GHashTable *options;
-} JavaFilter;
+} JavaOptions;
 
-FilterExprNode* java_filter_new();
-void java_filter_set_class_path(FilterExprNode *s, const gchar *class_path);
-void java_filter_set_class_name(FilterExprNode *s, const gchar *class_name);
-void java_filter_set_option(FilterExprNode *s, const gchar* key, const gchar* value);
+JavaOptions* java_options_new();
+void java_options_set_class_path(JavaOptions *self, const gchar *class_path);
+void java_options_set_class_name(JavaOptions *self, const gchar *class_name);
+void java_options_set_option(JavaOptions *self, const gchar* key, const gchar* value);
+void java_options_free(JavaOptions *self);
+JavaOptions* java_options_clone(JavaOptions *self);
 
 #endif

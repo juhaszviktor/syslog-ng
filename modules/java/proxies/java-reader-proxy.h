@@ -20,24 +20,24 @@
  *
  */
 
-#ifndef JAVA_FILTER_H_INCLUDED
-#define JAVA_FILTER_H_INCLUDED
+#ifndef JAVA_READER_PROXY_H_
+#define JAVA_READER_PROXY_H_
 
-#include "filter/filter-expr.h"
-#include "proxies/java-filter-proxy.h"
+#include <jni.h>
+#include <syslog-ng.h>
+#include "java_machine.h"
 
-typedef struct
-{
-    FilterExprNode super;
-    JavaFilterProxy *proxy;
-    GString *class_path;
-    gchar *class_name;
-    GHashTable *options;
-} JavaFilter;
+typedef struct _JavaReaderProxy JavaReaderProxy;
 
-FilterExprNode* java_filter_new();
-void java_filter_set_class_path(FilterExprNode *s, const gchar *class_path);
-void java_filter_set_class_name(FilterExprNode *s, const gchar *class_name);
-void java_filter_set_option(FilterExprNode *s, const gchar* key, const gchar* value);
+JavaReaderProxy* java_reader_proxy_new(const gchar *class_name, const gchar *class_path, gpointer handle);
+
+gboolean java_reader_proxy_init(JavaReaderProxy *self);
+gboolean java_reader_proxy_deinit(JavaReaderProxy *self);
+gboolean java_reader_proxy_fetch(JavaReaderProxy *self, LogMessage *msg);
+gboolean java_reader_proxy_open(JavaReaderProxy *self);
+void java_reader_proxy_close(JavaReaderProxy *self);
+gboolean java_reader_proxy_is_opened(JavaReaderProxy *self);
+
+void java_reader_proxy_free(JavaReaderProxy *self);
 
 #endif

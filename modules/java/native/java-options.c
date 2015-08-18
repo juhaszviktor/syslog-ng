@@ -20,22 +20,43 @@
  *
  */
 
-#ifndef JAVA_REWRITE_H_INCLUDED
-#define JAVA_REWRITE_H_INCLUDED
-
-#include "rewrite/rewrite-expr.h"
-#include "proxies/java-rewrite-proxy.h"
+#include "java-helpers.h"
 #include "java-options.h"
 
-
-typedef struct
+void
+java_options_set_option(JavaOptions *self, const gchar* key, const gchar* value)
 {
-  LogRewrite super;
-  JavaRewriteProxy *proxy;
-  JavaOptions *options;
-} JavaRewrite;
+    gchar *normalized_key = normalize_key(key);
+    g_hash_table_insert(self->options, normalized_key, g_strdup(value));
+}
 
-LogRewrite *java_rewrite_new(GlobalConfig *cfg, JavaOptions *options);
-void java_rewrite_set_options(LogRewrite *s, const JavaOptions *options);
+void
+java_options_set_class_path(JavaOptions *self, const gchar *class_path)
+{
+  g_string_assign(self->class_path, class_path);
+}
 
-#endif
+void
+java_options_set_class_name(JavaOptions *self, const gchar *class_name)
+{
+  g_free(self->class_name);
+  self->class_name = g_strdup(class_name);
+}
+
+void
+java_options_free(JavaOptions *self)
+{
+    g_free(self->class_name);
+    g_string_free(self->class_path, TRUE);
+    g_hash_table_unref(self->options);
+}
+
+JavaOptions *
+java_options_new()
+{
+    JavaOptions *self = g_new0(JavaOptions, 1);
+    self->class_path = g_string_new(".");
+    self->options = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
+    return self;
+}

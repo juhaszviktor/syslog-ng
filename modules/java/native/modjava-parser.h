@@ -30,6 +30,8 @@
 #include "java-filter.h"
 #include "java-parser.h"
 #include "java-rewrite.h"
+#include "java-source.h"
+#include "java-reader.h"
 
 extern CfgParser java_parser;
 
