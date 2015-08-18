@@ -75,8 +75,8 @@ java_rewrite_clone(LogPipe *s)
 {
   JavaRewrite *self = (JavaRewrite *) s;
 
-  //clone_java_options(self->options, cloned->options);
-  JavaRewrite *cloned = (JavaRewrite *) java_rewrite_new(log_pipe_get_config(&self->super.super), self->preferences);
+  JavaRewrite *cloned = (JavaRewrite *) java_rewrite_new(log_pipe_get_config(&self->super.super));
+  clone_java_preferences(self->preferences, cloned->preferences);
 
   if (self->super.condition)
     cloned->super.condition = filter_expr_ref(self->super.condition);
@@ -96,8 +96,16 @@ java_rewrite_free(LogPipe *s)
   java_preferences_free(self->preferences);
 };
 
+JavaPreferences *
+java_rewrite_get_preferences(LogRewrite *s)
+{
+  JavaRewrite *self = (JavaRewrite *)s;
+
+  return self->preferences;
+}
+
 LogRewrite *
-java_rewrite_new(GlobalConfig *cfg, JavaPreferences *preferences)
+java_rewrite_new(GlobalConfig *cfg)
 {
   JavaRewrite *self = g_new0(JavaRewrite, 1);
   log_rewrite_init_instance(&self->super, cfg);
@@ -106,7 +114,7 @@ java_rewrite_new(GlobalConfig *cfg, JavaPreferences *preferences)
   self->super.super.clone = java_rewrite_clone;
   self->super.super.free_fn = java_rewrite_free;
 
-  self->preferences = preferences;
+  self->preferences = java_preferences_new();
 
   return &self->super;
 };

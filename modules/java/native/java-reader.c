@@ -268,6 +268,13 @@ java_reader_free(LogPipe *s)
   log_source_free(s);
 }
 
+JavaPreferences *
+java_reader_get_preferences(JavaReader *s)
+{
+  JavaReader *self = (JavaReader *) s;
+  return self->preferences;
+}
+
 void
 java_reader_set_options(JavaReader *s, LogPipe *control, JavaReaderOptions *options, gint stats_level, gint stats_source, const gchar *stats_id, const gchar *stats_instance)
 {

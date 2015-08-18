@@ -24,7 +24,7 @@
 #include "java-preferences.h"
 
 void
-java_preferences_set_custom_option(JavaPreferences *self, const gchar* key, const gchar* value)
+java_preferences_set_option(JavaPreferences *self, const gchar* key, const gchar* value)
 {
     gchar *normalized_key = normalize_key(key);
     g_hash_table_insert(self->options, normalized_key, g_strdup(value));

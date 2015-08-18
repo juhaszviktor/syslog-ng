@@ -61,6 +61,17 @@ __copy_hash_table_iterator(gpointer key, gpointer val, gpointer dest){
 }
 
 void
-clone_java_preferences(GHashTable *src, GHashTable *dest) {
+clone_java_options(GHashTable *src, GHashTable *dest) {
   g_hash_table_foreach(src, __copy_hash_table_iterator, dest);
+}
+
+void
+clone_java_preferences(JavaPreferences *src, JavaPreferences *dst)
+{
+  g_free(dst->class_name);
+  dst->class_name = g_strdup(src->class_name);
+
+  g_string_assign(dst->class_path, src->class_path->str);
+
+  clone_java_options(src->options, dst->options);
 }

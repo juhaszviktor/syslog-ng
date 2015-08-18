@@ -27,17 +27,21 @@
 #include "driver.h"
 #include "logsource.h"
 #include "java-reader.h"
+#include "java-preferences.h"
 
 typedef struct _JavaSourceDriver
 {
   LogSrcDriver super;
   JavaReaderOptions reader_options;
   JavaReader *reader;
+  JavaPreferences *preferences;
 } JavaSourceDriver;
 
 LogDriver *java_sd_new(GlobalConfig *cfg);
 
 LogSourceOptions *java_sd_get_source_options(LogDriver *s);
 JavaReaderOptions *java_sd_get_reader_options(LogDriver *s);
+
+JavaPreferences *java_sd_get_preferences(LogDriver *s);
 
 #endif

@@ -81,7 +81,8 @@ java
 java_source
         : KW_JAVA
           {
-              *instance = last_driver = java_sd_new(configuration);
+            *instance = last_driver = java_sd_new(configuration);
+            last_preferences = java_sd_get_preferences(last_driver);
           }
           '(' java_source_options ')'
           {
@@ -121,8 +122,8 @@ java_source_custom_option
 java_rewrite
         : KW_JAVA
           {
-            last_preferences = java_preferences_new();
-            *instance = last_rewrite = java_rewrite_new(configuration, last_preferences);
+            *instance = last_rewrite = java_rewrite_new(configuration);
+            last_preferences = java_rewrite_get_preferences(last_rewrite);
           }
           '(' java_rewrite_options ')'
           {

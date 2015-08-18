@@ -32,6 +32,13 @@ java_sd_get_reader_options(LogDriver *s)
   return &self->reader_options;
 }
 
+JavaPreferences *
+java_sd_get_preferences(LogDriver *s)
+{
+  JavaSourceDriver *self = (JavaSourceDriver *)s;
+  return self->preferences;
+}
+
 static gboolean
 java_sd_init(LogPipe *s)
 {
@@ -91,6 +98,7 @@ java_sd_new(GlobalConfig *cfg)
   self->super.super.super.free_fn = java_sd_free;
 
   java_reader_options_defaults(&self->reader_options);
+  self->preferences = java_preferences_new();
 
   return &self->super.super;
 }

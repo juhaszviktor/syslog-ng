@@ -34,7 +34,7 @@ typedef struct
   JavaPreferences *preferences;
 } JavaRewrite;
 
-LogRewrite *java_rewrite_new(GlobalConfig *cfg, JavaPreferences *preferences);
-void java_rewrite_set_options(LogRewrite *s, const JavaPreferences *preferences);
+LogRewrite *java_rewrite_new(GlobalConfig *cfg);
+JavaPreferences *java_rewrite_get_preferences(LogRewrite *s);
 
 #endif
