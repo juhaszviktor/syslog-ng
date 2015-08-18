@@ -37,6 +37,7 @@ gboolean java_reader_proxy_fetch(JavaReaderProxy *self, LogMessage *msg);
 gboolean java_reader_proxy_open(JavaReaderProxy *self);
 void java_reader_proxy_close(JavaReaderProxy *self);
 gboolean java_reader_proxy_is_opened(JavaReaderProxy *self);
+gboolean java_reader_proxy_is_readable(JavaReaderProxy *self);
 
 void java_reader_proxy_free(JavaReaderProxy *self);
 

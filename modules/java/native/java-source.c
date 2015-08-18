@@ -45,7 +45,7 @@ java_sd_init(LogPipe *s)
   JavaSourceDriver *self = (JavaSourceDriver *)s;
   msg_debug("Java sd init", NULL);
   GlobalConfig *cfg = log_pipe_get_config(&self->super.super.super);
-  self->reader = java_reader_new(cfg);
+  self->reader = java_reader_new(cfg, self->preferences);
 
   java_reader_options_init(&self->reader_options, cfg, self->super.super.group);
 

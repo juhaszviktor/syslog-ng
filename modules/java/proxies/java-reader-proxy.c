@@ -39,6 +39,7 @@ typedef struct _JavaReaderImpl
   jmethodID mi_open;
   jmethodID mi_close;
   jmethodID mi_is_opened;
+  jmethodID mi_is_readable;
 } JavaReaderImpl;
 
 struct _JavaReaderProxy
@@ -64,11 +65,12 @@ __load_reader_object(JavaReaderProxy *self, const gchar *class_name, const gchar
 
   result &= load_class_method(java_env, self->loaded_class, "<init>", "(J)V", &self->reader_impl.mi_constructor);
   result &= load_class_method(java_env, self->loaded_class, "initProxy", "()Z", &self->reader_impl.mi_init);
-  result &= load_class_method(java_env, self->loaded_class, "deinitProxy", "()Z", &self->reader_impl.mi_init);
+  result &= load_class_method(java_env, self->loaded_class, "deinitProxy", "()V", &self->reader_impl.mi_init);
   result &= load_class_method(java_env, self->loaded_class, "fetchProxy", "(Lorg/syslog_ng/LogMessage;)Z", &self->reader_impl.mi_fetch);
   result &= load_class_method(java_env, self->loaded_class, "openProxy", "()Z", &self->reader_impl.mi_open);
   result &= load_class_method(java_env, self->loaded_class, "closeProxy", "()V", &self->reader_impl.mi_close);
   result &= load_class_method(java_env, self->loaded_class, "isOpenedProxy", "()Z", &self->reader_impl.mi_is_opened);
+  result &= load_class_method(java_env, self->loaded_class, "isReadableProxy", "()Z", &self->reader_impl.mi_is_readable);
 
   self->reader_impl.reader_object = CALL_JAVA_FUNCTION(java_env, NewObject, self->loaded_class, self->reader_impl.mi_constructor, handle);
   if (!self->reader_impl.reader_object)
@@ -189,6 +191,17 @@ java_reader_proxy_is_opened(JavaReaderProxy *self)
   JNIEnv *env = java_machine_get_env(self->java_machine, &env);
 
   result = CALL_JAVA_FUNCTION(env, CallBooleanMethod, self->reader_impl.reader_object, self->reader_impl.mi_is_opened);
+
+  return !!(result);
+}
+
+gboolean
+java_reader_proxy_is_readable(JavaReaderProxy *self)
+{
+  jboolean result;
+  JNIEnv *env = java_machine_get_env(self->java_machine, &env);
+
+  result = CALL_JAVA_FUNCTION(env, CallBooleanMethod, self->reader_impl.reader_object, self->reader_impl.mi_is_readable);
 
   return !!(result);
 }

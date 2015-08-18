@@ -50,6 +50,7 @@ public abstract class LogPipe {
 		}
 		catch (Exception e) {
 			InternalMessageSender.sendExceptionMessage(e);
+      System.out.println("FUCK " + e);
 			return false;
 		}
 	}

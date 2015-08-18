@@ -27,6 +27,7 @@
 #include "logsource.h"
 #include "poll-events.h"
 #include "timeutils.h"
+#include "java-preferences.h"
 
 /* flags */
 #define LR_KERNEL          0x0002
@@ -50,7 +51,7 @@ typedef struct _JavaReader JavaReader;
 void java_reader_set_options(JavaReader *s, LogPipe *control, JavaReaderOptions *options, gint stats_level, gint stats_source, const gchar *stats_id, const gchar *stats_instance);
 void java_reader_set_immediate_check(JavaReader *s);
 void java_reader_reopen(JavaReader *s);
-JavaReader *java_reader_new(GlobalConfig *cfg);
+JavaReader *java_reader_new(GlobalConfig *cfg, JavaPreferences *preferences);
 
 void java_reader_options_defaults(JavaReaderOptions *options);
 void java_reader_options_init(JavaReaderOptions *options, GlobalConfig *cfg, const gchar *group_name);

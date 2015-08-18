@@ -23,6 +23,7 @@
 
 #include "java-reader.h"
 #include "java-preferences.h"
+#include "poll-follow-events.h"
 #include "proxies/java-reader-proxy.h"
 #include "mainloop-io-worker.h"
 #include "mainloop-call.h"
@@ -41,7 +42,7 @@ struct _JavaReader
   struct iv_event schedule_wakeup;
   MainLoopIOWorkerJob io_job;
   gint notify_code;
-
+  PollEvents *poll_events;
 };
 
 static gboolean java_reader_fetch_log(JavaReader *self);
@@ -137,14 +138,16 @@ java_reader_stop_watches(JavaReader *self)
 {
   if (iv_task_registered(&self->restart_task))
     iv_task_unregister(&self->restart_task);
+
+  poll_events_stop_watches(self->poll_events);  
 }
 
 static void
 java_reader_start_watches(JavaReader *self)
 {
- if (iv_task_registered(&self->restart_task))
-     iv_task_register(&self->restart_task);
-
+ if (!iv_task_registered(&self->restart_task))
+   iv_task_register(&self->restart_task);
+ poll_events_start_watches(self->poll_events);
 }
 
 static gboolean
@@ -176,6 +179,7 @@ java_reader_update_watches(JavaReader *self)
         }
       return;
     }
+  poll_events_update_watches(self->poll_events, G_IO_IN);
 }
 
 static gboolean
@@ -184,15 +188,14 @@ java_reader_handle_line(JavaReader *self)
   msg_debug("Incoming log entry", NULL);
 
   //FETCH LOG
-LogMessage *msg = log_msg_new_empty();
-LogPathOptions path_options = LOG_PATH_OPTIONS_INIT;
-msg->flags = LF_LOCAL;
-msg->pri = 15;
-log_msg_refcache_start_producer(msg);
-log_pipe_queue(&self->super.super, msg, &path_options);
-log_msg_refcache_stop();
-log_source_free_to_send(&self->super);
-log_source_post(&self->super, msg);
+  LogMessage *msg = log_msg_new_empty();
+  log_msg_set_value(msg, LM_V_MESSAGE, "Hello World!", -1);
+  LogPathOptions path_options = LOG_PATH_OPTIONS_INIT;
+  msg->flags = LF_LOCAL;
+  msg->pri = 15;
+  log_msg_refcache_start_producer(msg);
+  log_source_post(&self->super, msg);
+  log_msg_refcache_stop();
   return log_source_free_to_send(&self->super);
 }
 
@@ -229,8 +232,10 @@ java_reader_init(LogPipe *s)
 
   if (!java_reader_proxy_init(self->proxy))
     return FALSE;
-
+  
   iv_event_register(&self->schedule_wakeup);
+  self->poll_events = poll_follow_events_new(1000, self->proxy, java_reader_proxy_is_readable);
+  poll_events_set_callback(self->poll_events, java_reader_io_process_input, self);
   java_reader_start_watches(self); 
 
   msg_debug("Java source initialized", NULL);
@@ -247,8 +252,8 @@ java_reader_deinit(LogPipe *s)
   iv_event_unregister(&self->schedule_wakeup);
   java_reader_stop_watches(self);
 
-  if(!java_reader_proxy_deinit(self->proxy))
-    return FALSE;
+  /*if(!java_reader_proxy_deinit(self->proxy))
+    return FALSE;*/
 
   if (!log_source_deinit(s))
     return FALSE;
@@ -290,7 +295,7 @@ java_reader_set_options(JavaReader *s, LogPipe *control, JavaReaderOptions *opti
 }
 
 JavaReader *
-java_reader_new(GlobalConfig *cfg)
+java_reader_new(GlobalConfig *cfg, JavaPreferences *preferences)
 {
   JavaReader *self = g_new0(JavaReader, 1);
 
@@ -299,7 +304,8 @@ java_reader_new(GlobalConfig *cfg)
   self->super.super.deinit = java_reader_deinit;
   self->super.super.free_fn = java_reader_free;
   self->super.wakeup = java_reader_wakeup;
-  self->immediate_check = FALSE;
+  self->immediate_check = TRUE;
+  self->preferences = preferences;
   java_reader_init_watches(self);
   return self;
 }

@@ -38,17 +38,19 @@ public abstract class LogReader extends LogPipe {
 
     protected abstract boolean isOpened();
 
-    protected abstract LogMessage fetch();
+    protected abstract boolean fetch(LogMessage msg);
+
+    protected abstract boolean isReadable();
 
     private native String getOption(long ptr, String key);
 
-    public LogMessage fetchProxy() {
+    public boolean fetchProxy(LogMessage msg) {
         try {
-            return fetch();
+            return fetch(msg);
         }
         catch (Exception e) {
             InternalMessageSender.sendExceptionMessage(e);
-            return null;
+            return false;
         }
     }
 
@@ -80,4 +82,15 @@ public abstract class LogReader extends LogPipe {
             return false;
         }
     }
+
+    public boolean isReadableProxy() {
+        try {
+            return isReadable();
+        }
+        catch (Exception e) {
+            InternalMessageSender.sendExceptionMessage(e);
+            return false;
+        }
+    }
+
 }

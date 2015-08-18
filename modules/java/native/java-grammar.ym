@@ -86,6 +86,7 @@ java_source
           }
           '(' java_source_options ')'
           {
+            $$ = *instance;
           }
 
 java_source_options
