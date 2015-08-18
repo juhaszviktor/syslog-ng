@@ -25,17 +25,16 @@
 
 #include "rewrite/rewrite-expr.h"
 #include "proxies/java-rewrite-proxy.h"
-#include "java-options.h"
-
+#include "java-preferences.h"
 
 typedef struct
 {
   LogRewrite super;
   JavaRewriteProxy *proxy;
-  JavaOptions *options;
+  JavaPreferences *preferences;
 } JavaRewrite;
 
-LogRewrite *java_rewrite_new(GlobalConfig *cfg, JavaOptions *options);
-void java_rewrite_set_options(LogRewrite *s, const JavaOptions *options);
+LogRewrite *java_rewrite_new(GlobalConfig *cfg, JavaPreferences *preferences);
+void java_rewrite_set_options(LogRewrite *s, const JavaPreferences *preferences);
 
 #endif

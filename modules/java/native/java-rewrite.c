@@ -35,7 +35,7 @@ Java_org_syslog_1ng_LogRewrite_getOption(JNIEnv *env, jobject obj, jlong s, jstr
     }
 
     gchar *normalized_key = normalize_key(key_str);
-    value = g_hash_table_lookup(self->options->options, normalized_key);
+    value = g_hash_table_lookup(self->preferences->options, normalized_key);
     (*env)->ReleaseStringUTFChars(env, key, key_str);
     g_free(normalized_key);
 
@@ -54,7 +54,7 @@ java_rewrite_init(LogPipe *s)
 {
   JavaRewrite *self = (JavaRewrite *)s;
 
-  self->proxy = java_rewrite_proxy_new(self->options->class_name, self->options->class_path->str, self);
+  self->proxy = java_rewrite_proxy_new(self->preferences->class_name, self->preferences->class_path->str, self);
 
   java_rewrite_proxy_init(self->proxy);
   return TRUE;
@@ -76,7 +76,7 @@ java_rewrite_clone(LogPipe *s)
   JavaRewrite *self = (JavaRewrite *) s;
 
   //clone_java_options(self->options, cloned->options);
-  JavaRewrite *cloned = (JavaRewrite *) java_rewrite_new(log_pipe_get_config(&self->super.super), self->options);
+  JavaRewrite *cloned = (JavaRewrite *) java_rewrite_new(log_pipe_get_config(&self->super.super), self->preferences);
 
   if (self->super.condition)
     cloned->super.condition = filter_expr_ref(self->super.condition);
@@ -93,11 +93,11 @@ java_rewrite_free(LogPipe *s)
     java_rewrite_proxy_free(self->proxy);
 
   log_rewrite_free_method(s);
-  java_options_free(self->options);
+  java_preferences_free(self->preferences);
 };
 
 LogRewrite *
-java_rewrite_new(GlobalConfig *cfg, JavaOptions *options)
+java_rewrite_new(GlobalConfig *cfg, JavaPreferences *preferences)
 {
   JavaRewrite *self = g_new0(JavaRewrite, 1);
   log_rewrite_init_instance(&self->super, cfg);
@@ -106,7 +106,7 @@ java_rewrite_new(GlobalConfig *cfg, JavaOptions *options)
   self->super.super.clone = java_rewrite_clone;
   self->super.super.free_fn = java_rewrite_free;
 
-  self->options = options;
+  self->preferences = preferences;
 
   return &self->super;
 };

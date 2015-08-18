@@ -34,7 +34,7 @@
 #include "plugin.h"
 
 FilterExprNode *last_filter;
-JavaOptions *last_options;
+JavaPreferences *last_preferences;
 JavaReaderOptions *last_java_reader_options;
 
 }
@@ -88,19 +88,19 @@ java_source
           }
 
 java_source_options
-        : java_rewrite_option java_rewrite_options
+        : java_source_option java_source_options
         |
         ;
 
 java_source_option
         : KW_CLASS_PATH '(' string ')'
           {
-            java_options_set_class_path(last_options, $3);
+            java_preferences_set_class_path(last_preferences, $3);
             free($3);
           }
         | KW_CLASS_NAME '(' string ')'
           {
-            java_options_set_class_name(last_options, $3);
+            java_preferences_set_class_name(last_preferences, $3);
             free($3);
           }
         | KW_OPTION '(' java_source_custom_options ')'
@@ -116,13 +116,13 @@ java_source_custom_options
   ;
 
 java_source_custom_option
-  : LL_STRING LL_STRING { java_options_set_option(last_options, $1, $2); free($1); free($2); }
+  : LL_STRING LL_STRING { java_preferences_set_option(last_preferences, $1, $2); free($1); free($2); }
 
 java_rewrite
         : KW_JAVA
           {
-            last_options = java_options_new();
-            *instance = last_rewrite = java_rewrite_new(configuration, last_options);
+            last_preferences = java_preferences_new();
+            *instance = last_rewrite = java_rewrite_new(configuration, last_preferences);
           }
           '(' java_rewrite_options ')'
           {
@@ -137,12 +137,12 @@ java_rewrite_options
 java_rewrite_option
         : KW_CLASS_PATH '(' string ')'
           {
-            java_options_set_class_path(last_options, $3);
+            java_preferences_set_class_path(last_preferences, $3);
             free($3);
           }
         | KW_CLASS_NAME '(' string ')'
           {
-            java_options_set_class_name(last_options, $3);
+            java_preferences_set_class_name(last_preferences, $3);
             free($3);
           }
         | KW_OPTION '(' java_rewrite_custom_options ')'
@@ -155,7 +155,7 @@ java_rewrite_custom_options
   ;
 
 java_rewrite_custom_option
-  : LL_STRING LL_STRING { java_options_set_option(last_options, $1, $2); free($1); free($2); }
+  : LL_STRING LL_STRING { java_preferences_set_option(last_preferences, $1, $2); free($1); free($2); }
 
 java_parser
         : KW_JAVA

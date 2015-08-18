@@ -22,6 +22,7 @@
  */
 
 #include "java-reader.h"
+#include "java-preferences.h"
 #include "proxies/java-reader-proxy.h"
 #include "mainloop-io-worker.h"
 #include "mainloop-call.h"
@@ -30,7 +31,7 @@
 struct _JavaReader
 {
   LogSource super;
-  JavaOptions *java_options;
+  JavaPreferences *preferences;
   gboolean immediate_check;
   LogPipe *control;
   JavaReaderOptions *options;
@@ -222,7 +223,7 @@ java_reader_init(LogPipe *s)
   if (!log_source_init(s))
     return FALSE;
 
-  self->proxy = java_reader_proxy_new(self->java_options->class_name, self->java_options->class_path->str, self);
+  self->proxy = java_reader_proxy_new(self->preferences->class_name, self->preferences->class_path->str, self);
   if (!self->proxy)
     return FALSE;
 

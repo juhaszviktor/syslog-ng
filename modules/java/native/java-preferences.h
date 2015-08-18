@@ -20,21 +20,21 @@
  *
  */
 
-#ifndef JAVA_OPTIONS_H_INCLUDED
-#define JAVA_OPTIONS_H_INCLUDED
+#ifndef JAVA_PREFERENCES_H_INCLUDED
+#define JAVA_PREFERENCES_H_INCLUDED
 
 typedef struct
 {
     GString *class_path;
     gchar *class_name;
     GHashTable *options;
-} JavaOptions;
+} JavaPreferences;
 
-JavaOptions* java_options_new();
-void java_options_set_class_path(JavaOptions *self, const gchar *class_path);
-void java_options_set_class_name(JavaOptions *self, const gchar *class_name);
-void java_options_set_option(JavaOptions *self, const gchar* key, const gchar* value);
-void java_options_free(JavaOptions *self);
-JavaOptions* java_options_clone(JavaOptions *self);
+JavaPreferences* java_preferences_new();
+void java_preferences_set_class_path(JavaPreferences *self, const gchar *class_path);
+void java_preferences_set_class_name(JavaPreferences *self, const gchar *class_name);
+void java_preferences_set_option(JavaPreferences *self, const gchar* key, const gchar* value);
+void java_preferences_free(JavaPreferences *self);
+JavaPreferences* java_preferences_clone(JavaPreferences *self);
 
 #endif

@@ -21,40 +21,40 @@
  */
 
 #include "java-helpers.h"
-#include "java-options.h"
+#include "java-preferences.h"
 
 void
-java_options_set_option(JavaOptions *self, const gchar* key, const gchar* value)
+java_preferences_set_custom_option(JavaPreferences *self, const gchar* key, const gchar* value)
 {
     gchar *normalized_key = normalize_key(key);
     g_hash_table_insert(self->options, normalized_key, g_strdup(value));
 }
 
 void
-java_options_set_class_path(JavaOptions *self, const gchar *class_path)
+java_preferences_set_class_path(JavaPreferences *self, const gchar *class_path)
 {
   g_string_assign(self->class_path, class_path);
 }
 
 void
-java_options_set_class_name(JavaOptions *self, const gchar *class_name)
+java_preferences_set_class_name(JavaPreferences *self, const gchar *class_name)
 {
   g_free(self->class_name);
   self->class_name = g_strdup(class_name);
 }
 
 void
-java_options_free(JavaOptions *self)
+java_preferences_free(JavaPreferences *self)
 {
     g_free(self->class_name);
     g_string_free(self->class_path, TRUE);
     g_hash_table_unref(self->options);
 }
 
-JavaOptions *
-java_options_new()
+JavaPreferences *
+java_preferences_new()
 {
-    JavaOptions *self = g_new0(JavaOptions, 1);
+    JavaPreferences *self = g_new0(JavaPreferences, 1);
     self->class_path = g_string_new(".");
     self->options = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 

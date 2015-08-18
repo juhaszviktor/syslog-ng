@@ -27,7 +27,6 @@
 #include "logsource.h"
 #include "poll-events.h"
 #include "timeutils.h"
-#include "java-options.h"
 
 /* flags */
 #define LR_KERNEL          0x0002
@@ -37,12 +36,9 @@
 #define LR_PREEMPT         0x0020
 #define LR_THREADED        0x0040
 
-/* options */
-
 typedef struct _JavaReaderOptions
 {
   LogSourceOptions super;
-  JavaOptions *options;
   gboolean initialized;
   guint32 flags;
   gint fetch_limit;
@@ -56,7 +52,7 @@ void java_reader_set_immediate_check(JavaReader *s);
 void java_reader_reopen(JavaReader *s);
 JavaReader *java_reader_new(GlobalConfig *cfg);
 
-//void java_reader_options_defaults(JavaReaderOptions *options);
+void java_reader_options_defaults(JavaReaderOptions *options);
 void java_reader_options_init(JavaReaderOptions *options, GlobalConfig *cfg, const gchar *group_name);
 void java_reader_options_destroy(JavaReaderOptions *options);
 //gint java_reader_options_lookup_flag(const gchar *flag);

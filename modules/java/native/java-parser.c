@@ -106,7 +106,7 @@ java_parser_clone(LogPipe *s)
   g_free(cloned->class_name);
   cloned->class_name = g_strdup(self->class_name);
   g_string_assign(cloned->class_path, self->class_path->str);
-  clone_java_options(self->options, cloned->options);
+  clone_java_preferences(self->options, cloned->options);
 
   return &cloned->super.super;
 };
