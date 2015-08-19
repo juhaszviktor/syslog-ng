@@ -65,7 +65,7 @@ __load_reader_object(JavaReaderProxy *self, const gchar *class_name, const gchar
 
   result &= load_class_method(java_env, self->loaded_class, "<init>", "(J)V", &self->reader_impl.mi_constructor);
   result &= load_class_method(java_env, self->loaded_class, "initProxy", "()Z", &self->reader_impl.mi_init);
-  result &= load_class_method(java_env, self->loaded_class, "deinitProxy", "()V", &self->reader_impl.mi_init);
+  result &= load_class_method(java_env, self->loaded_class, "deinitProxy", "()V", &self->reader_impl.mi_deinit);
   result &= load_class_method(java_env, self->loaded_class, "fetchProxy", "(Lorg/syslog_ng/LogMessage;)Z", &self->reader_impl.mi_fetch);
   result &= load_class_method(java_env, self->loaded_class, "openProxy", "()Z", &self->reader_impl.mi_open);
   result &= load_class_method(java_env, self->loaded_class, "closeProxy", "()V", &self->reader_impl.mi_close);
@@ -101,6 +101,7 @@ java_reader_proxy_fetch(JavaReaderProxy *self, LogMessage *msg)
                               java_log_message_proxy_get_java_object(jmsg));
 
   java_log_message_proxy_free(jmsg);
+  java_machine_detach_thread();
 
   return !!(result);
 }

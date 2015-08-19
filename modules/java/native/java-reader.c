@@ -187,12 +187,11 @@ java_reader_handle_line(JavaReader *self)
 {
   msg_debug("Incoming log entry", NULL);
 
-  //FETCH LOG
   LogMessage *msg = log_msg_new_empty();
-  log_msg_set_value(msg, LM_V_MESSAGE, "Hello World!", -1);
-  LogPathOptions path_options = LOG_PATH_OPTIONS_INIT;
-  msg->flags = LF_LOCAL;
-  msg->pri = 15;
+  //LogPathOptions path_options = LOG_PATH_OPTIONS_INIT;
+
+  java_reader_proxy_fetch(self->proxy, msg);
+
   log_msg_refcache_start_producer(msg);
   log_source_post(&self->super, msg);
   log_msg_refcache_stop();
@@ -208,7 +207,7 @@ java_reader_fetch_log(JavaReader *self)
   self->immediate_check = TRUE;
   while (msg_count < self->options->fetch_limit && !main_loop_worker_job_quit())
     {
-      Bookmark *bookmark = ack_tracker_request_bookmark(self->super.ack_tracker);
+      ack_tracker_request_bookmark(self->super.ack_tracker);
       msg_count++;
       if (!java_reader_handle_line(self))
         {
@@ -252,8 +251,8 @@ java_reader_deinit(LogPipe *s)
   iv_event_unregister(&self->schedule_wakeup);
   java_reader_stop_watches(self);
 
-  /*if(!java_reader_proxy_deinit(self->proxy))
-    return FALSE;*/
+  if(!java_reader_proxy_deinit(self->proxy))
+    return FALSE;
 
   if (!log_source_deinit(s))
     return FALSE;
@@ -304,7 +303,7 @@ java_reader_new(GlobalConfig *cfg, JavaPreferences *preferences)
   self->super.super.deinit = java_reader_deinit;
   self->super.super.free_fn = java_reader_free;
   self->super.wakeup = java_reader_wakeup;
-  self->immediate_check = TRUE;
+  self->immediate_check = FALSE;
   self->preferences = preferences;
   java_reader_init_watches(self);
   return self;
