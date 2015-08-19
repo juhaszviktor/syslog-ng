@@ -25,7 +25,7 @@
 #ifndef JAVA_TAGS_PROXY_H_
 #define JAVA_TAGS_PROXY_H_
 
-#include "LogTag.h"
+#include "org_syslog_ng_LogTag.h"
 #include "tags.h"
 
 

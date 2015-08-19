@@ -30,5 +30,6 @@ gchar * normalize_key(const gchar *buffer);
 gboolean load_class_method(JNIEnv *java_env, jclass loaded_class, const gchar *method_name, const gchar *signature, jmethodID *method_id);
 void clone_java_options(GHashTable *src, GHashTable *dest);
 void clone_java_preferences(JavaPreferences *src, JavaPreferences *dst);
+gchar *java_str_dup(JNIEnv *env, jstring java_string);
 
 #endif

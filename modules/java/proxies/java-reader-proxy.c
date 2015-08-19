@@ -40,6 +40,9 @@ typedef struct _JavaReaderImpl
   jmethodID mi_close;
   jmethodID mi_is_opened;
   jmethodID mi_is_readable;
+  jmethodID mi_seek_to_bookmark;
+  jmethodID mi_get_bookmark;
+  jmethodID mi_get_name_by_uniq_options;
 } JavaReaderImpl;
 
 struct _JavaReaderProxy
@@ -72,6 +75,9 @@ __load_reader_object(JavaReaderProxy *self, const gchar *class_name, const gchar
   result &= load_class_method(java_env, self->loaded_class, "closeProxy", "()V", &self->reader_impl.mi_close);
   result &= load_class_method(java_env, self->loaded_class, "isOpenedProxy", "()Z", &self->reader_impl.mi_is_opened);
   result &= load_class_method(java_env, self->loaded_class, "isReadableProxy", "()Z", &self->reader_impl.mi_is_readable);
+  result &= load_class_method(java_env, self->loaded_class, "getBookmarkProxy", "()Ljava/lang/String;", &self->reader_impl.mi_get_bookmark);
+  result &= load_class_method(java_env, self->loaded_class, "seekToBookmarkProxy", "(Ljava/lang/String;)Z", &self->reader_impl.mi_seek_to_bookmark);
+  result &= load_class_method(java_env, self->loaded_class, "getNameByUniqOptionsProxy", "()Ljava/lang/String;", &self->reader_impl.mi_get_name_by_uniq_options);
 
   self->reader_impl.reader_object = CALL_JAVA_FUNCTION(java_env, NewObject, self->loaded_class, self->reader_impl.mi_constructor, handle);
   if (!self->reader_impl.reader_object)
@@ -211,4 +217,34 @@ java_reader_proxy_is_readable(JavaReaderProxy *self)
   result = CALL_JAVA_FUNCTION(env, CallBooleanMethod, self->reader_impl.reader_object, self->reader_impl.mi_is_readable);
 
   return !!(result);
+}
+
+
+gboolean
+java_reader_proxy_seek_to_bookmark(JavaReaderProxy *self, const gchar *bookmark)
+{
+  jboolean result;
+  JNIEnv *env = java_machine_get_env(self->java_machine, &env);
+  jstring jbookmark = (*env)->NewStringUTF(env, bookmark);
+
+  result = CALL_JAVA_FUNCTION(env, CallBooleanMethod, self->reader_impl.reader_object, self->reader_impl.mi_seek_to_bookmark, jbookmark);
+
+  return !!(result);
+}
+
+
+gchar *java_reader_proxy_get_bookmark(JavaReaderProxy *self)
+{
+  jstring result;
+  JNIEnv *env = java_machine_get_env(self->java_machine, &env);
+  result = CALL_JAVA_FUNCTION(env, CallObjectMethod, self->reader_impl.reader_object, self->reader_impl.mi_get_bookmark);
+  return java_str_dup(env, result);  
+}
+
+gchar *java_reader_proxy_get_name_by_uniq_options(JavaReaderProxy *self)
+{
+  jstring result;
+  JNIEnv *env = java_machine_get_env(self->java_machine, &env);
+  result = CALL_JAVA_FUNCTION(env, CallObjectMethod, self->reader_impl.reader_object, self->reader_impl.mi_get_name_by_uniq_options);
+  return java_str_dup(env, result);
 }

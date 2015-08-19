@@ -42,6 +42,12 @@ public abstract class LogReader extends LogPipe {
 
     protected abstract boolean isReadable();
 
+    protected abstract String getBookmark();
+
+    protected abstract boolean seekToBookmark(String bookmark);
+
+    protected abstract String getNameByUniqOptions();
+
     private native String getOption(long ptr, String key);
 
     public boolean fetchProxy(LogMessage msg) {
@@ -93,4 +99,33 @@ public abstract class LogReader extends LogPipe {
         }
     }
 
+    public String getBookmarkProxy() {
+        try {
+            return getBookmark();
+        }
+        catch (Exception e) {
+            InternalMessageSender.sendExceptionMessage(e);
+            return null;
+        }
+    }
+
+    public boolean seekToBookmarkProxy(String bookmark) {
+        try {
+            return seekToBookmark(bookmark);
+        }
+        catch (Exception e) {
+            InternalMessageSender.sendExceptionMessage(e);
+            return false;
+        }
+    }
+
+    public String getNameByUniqOptionsProxy() {
+        try {
+            return getNameByUniqOptions();
+        }
+        catch (Exception e) {
+            InternalMessageSender.sendExceptionMessage(e);
+            return null;
+        }
+    }
 }

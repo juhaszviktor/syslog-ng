@@ -264,22 +264,6 @@ java_destination_proxy_get_name_by_uniq_options(JavaDestinationProxy *self)
 }
 
 static gchar *
-__java_str_dup(JNIEnv *env, jstring java_string)
-{
-  gchar *result = NULL;
-  gchar *c_string = NULL;
-
-  c_string = (gchar *) CALL_JAVA_FUNCTION(env, GetStringUTFChars, java_string, NULL);
-  if (strlen(c_string) == 0)
-    goto exit;
-
-  result = strdup(c_string);
-exit:
-  CALL_JAVA_FUNCTION(env, ReleaseStringUTFChars, java_string, c_string);
-  return result;
-}
-
-static gchar *
 __get_name_by_uniq_options(JavaDestinationProxy *self)
 {
   JNIEnv *env = java_machine_get_env(self->java_machine, &env);
@@ -293,7 +277,7 @@ __get_name_by_uniq_options(JavaDestinationProxy *self)
       return NULL;
     }
 
-  return __java_str_dup(env, java_string);
+  return java_str_dup(env, java_string);
 }
 
 gboolean

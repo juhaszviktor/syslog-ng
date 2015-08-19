@@ -38,6 +38,9 @@ gboolean java_reader_proxy_open(JavaReaderProxy *self);
 void java_reader_proxy_close(JavaReaderProxy *self);
 gboolean java_reader_proxy_is_opened(JavaReaderProxy *self);
 gboolean java_reader_proxy_is_readable(JavaReaderProxy *self);
+gboolean java_reader_proxy_seek_to_bookmark(JavaReaderProxy *self, const gchar *bookmark);
+gchar *java_reader_proxy_get_bookmark(JavaReaderProxy *self);
+gchar *java_reader_proxy_get_name_by_uniq_options(JavaReaderProxy *self);
 
 void java_reader_proxy_free(JavaReaderProxy *self);
 

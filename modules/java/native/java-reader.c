@@ -28,6 +28,10 @@
 #include "mainloop-io-worker.h"
 #include "mainloop-call.h"
 #include "ack_tracker.h"
+#include "persist-state.h"
+#include "persistable-state-header.h"
+
+#define MAX_BOOKMARK_LENGTH 1024
 
 struct _JavaReader
 {
@@ -43,12 +47,103 @@ struct _JavaReader
   MainLoopIOWorkerJob io_job;
   gint notify_code;
   PollEvents *poll_events;
+
+  PersistState *persist_state;
+  PersistEntryHandle persist_handle;
+  gchar *persist_name;
 };
+
+typedef struct _JavaReaderState
+{
+  PersistableStateHeader header;
+  gchar bookmark[MAX_BOOKMARK_LENGTH];
+} JavaReaderState;
+
+typedef struct _JavaBookmarkData
+{
+  PersistEntryHandle persist_handle;
+  gchar *bookmark;
+} JavaBookmarkData;
 
 static gboolean java_reader_fetch_log(JavaReader *self);
 
 static void java_reader_stop_watches(JavaReader *self);
+static void java_reader_start_watches(JavaReader *self);
 static void java_reader_update_watches(JavaReader *self);
+
+static gboolean
+java_reader_load_state(JavaReader *self)
+{
+  GlobalConfig *cfg = log_pipe_get_config(&self->super.super);
+
+  gsize state_size;
+  guint8 persist_version;
+
+  self->persist_state = cfg->state;
+  self->persist_handle = persist_state_lookup_entry(self->persist_state, self->persist_name, &state_size, &persist_version);
+  return !!(self->persist_handle);
+}
+
+static void
+java_reader_alloc_state(JavaReader *self)
+{
+  self->persist_handle = persist_state_alloc_entry(self->persist_state, self->persist_name, sizeof(JavaReaderState));
+  JavaReaderState *state = persist_state_map_entry(self->persist_state, self->persist_handle);
+
+  state->header.version = 0;
+  state->header.big_endian = (G_BYTE_ORDER == G_BIG_ENDIAN);
+
+  persist_state_unmap_entry(self->persist_state, self->persist_handle); 
+}
+
+static gboolean
+java_reader_seek_to_saved_state(JavaReader *self)
+{
+  gboolean result = FALSE;
+
+  JavaReaderState *state = persist_state_map_entry(self->persist_state, self->persist_handle);
+  result = java_reader_proxy_seek_to_bookmark(self->proxy, state->bookmark);
+  persist_state_unmap_entry(self->persist_state, self->persist_handle);
+
+  return result;
+}
+
+static gboolean
+java_reader_set_starting_position(JavaReader *self)
+{
+  if (!java_reader_load_state(self))
+    {
+      java_reader_alloc_state(self);
+    }
+  return java_reader_seek_to_saved_state(self); 
+}
+
+static void
+java_reader_reader_save_state(Bookmark *bookmark)
+{
+  JavaBookmarkData *bookmark_data = (JavaBookmarkData *)(&bookmark->container);
+  JavaReaderState *state = persist_state_map_entry(bookmark->persist_state, bookmark_data->persist_handle);
+  strcpy(state->bookmark, bookmark_data->bookmark);
+  persist_state_unmap_entry(bookmark->persist_state, bookmark_data->persist_handle);
+}
+
+static void
+java_reader_destroy_bookmark(Bookmark *bookmark)
+{
+  JavaBookmarkData *bookmark_data = (JavaBookmarkData *)(&bookmark->container);
+  free(bookmark_data->bookmark);
+}
+
+static void
+java_reader_fill_bookmark(JavaReader *self, Bookmark *bookmark)
+{
+  JavaBookmarkData *bookmark_data = (JavaBookmarkData *)(&bookmark->container);
+  bookmark_data->bookmark = java_reader_proxy_get_bookmark(self->proxy);
+  bookmark_data->persist_handle = self->persist_handle;
+  bookmark->save = java_reader_reader_save_state;
+  bookmark->destroy = java_reader_destroy_bookmark;
+}
+
 
 static void
 java_reader_work_perform(void *s)
@@ -71,6 +166,7 @@ java_reader_work_finished(void *s)
       self->notify_code = 0;
       log_pipe_notify(self->control, notify_code, self);
     }
+  java_reader_update_watches(self);
   log_pipe_unref(&self->super.super);
 }
 
@@ -117,6 +213,13 @@ java_reader_io_process_input(gpointer s)
 }
 
 static void
+java_reader_start_watches(JavaReader *self)
+{
+ poll_events_start_watches(self->poll_events);
+ java_reader_update_watches(self);
+}
+
+static void
 java_reader_init_watches(JavaReader *self)
 {
   IV_EVENT_INIT(&self->schedule_wakeup);
@@ -143,20 +246,6 @@ java_reader_stop_watches(JavaReader *self)
 }
 
 static void
-java_reader_start_watches(JavaReader *self)
-{
- if (!iv_task_registered(&self->restart_task))
-   iv_task_register(&self->restart_task);
- poll_events_start_watches(self->poll_events);
-}
-
-static gboolean
-java_reader_is_opened(JavaReader *self)
-{
-  return TRUE;
-}
-
-static void
 java_reader_update_watches(JavaReader *self)
 {
   gboolean free_to_send;
@@ -177,20 +266,29 @@ java_reader_update_watches(JavaReader *self)
         {
           iv_task_register(&self->restart_task);
         }
-      return;
     }
-  poll_events_update_watches(self->poll_events, G_IO_IN);
+  else
+    {
+      poll_events_update_watches(self->poll_events, G_IO_IN);
+    }
+}
+
+static LogMessage *
+java_reader_get_message(JavaReader *self)
+{
+  LogMessage *msg = log_msg_new_empty();
+  if (!java_reader_proxy_fetch(self->proxy, msg))
+    {
+      log_msg_unref(msg);
+      msg = NULL;
+    }
+  return msg;
 }
 
 static gboolean
-java_reader_handle_line(JavaReader *self)
+java_reader_handle_message(JavaReader *self, LogMessage *msg)
 {
   msg_debug("Incoming log entry", NULL);
-
-  LogMessage *msg = log_msg_new_empty();
-  //LogPathOptions path_options = LOG_PATH_OPTIONS_INIT;
-
-  java_reader_proxy_fetch(self->proxy, msg);
 
   log_msg_refcache_start_producer(msg);
   log_source_post(&self->super, msg);
@@ -204,16 +302,42 @@ java_reader_fetch_log(JavaReader *self)
 {
   gint msg_count = 0;
   gint result = 0;
-  self->immediate_check = TRUE;
   while (msg_count < self->options->fetch_limit && !main_loop_worker_job_quit())
     {
-      ack_tracker_request_bookmark(self->super.ack_tracker);
+      LogMessage *msg = java_reader_get_message(self);
+      if (!msg)
+        {
+          break;
+        }
+      Bookmark *bookmark = ack_tracker_request_bookmark(self->super.ack_tracker);
+      java_reader_fill_bookmark(self, bookmark);
       msg_count++;
-      if (!java_reader_handle_line(self))
+      if (!java_reader_handle_message(self, msg))
         {
           break;
         }
    }
+  if (msg_count == self->options->fetch_limit)
+    {
+      self->immediate_check = TRUE;
+    }
+  return result;
+}
+
+static gboolean
+java_reader_ensure_open(JavaReader *self)
+{
+  return java_reader_proxy_is_opened(self->proxy) || java_reader_proxy_open(self->proxy);
+}
+
+static gboolean
+java_reader_check_source(JavaReader *self)
+{
+  gboolean result = FALSE;
+  if (java_reader_ensure_open(self))
+    {
+      result = java_reader_proxy_is_readable(self->proxy);
+    }
   return result;
 }
 
@@ -229,11 +353,17 @@ java_reader_init(LogPipe *s)
   if (!self->proxy)
     return FALSE;
 
+  self->persist_name = java_reader_proxy_get_name_by_uniq_options(self->proxy);
+
+  java_reader_set_starting_position(self);
+
   if (!java_reader_proxy_init(self->proxy))
     return FALSE;
   
+  java_reader_proxy_open(self->proxy);
+  
   iv_event_register(&self->schedule_wakeup);
-  self->poll_events = poll_follow_events_new(1000, self->proxy, java_reader_proxy_is_readable);
+  self->poll_events = poll_follow_events_new(1000, self, java_reader_check_source);
   poll_events_set_callback(self->poll_events, java_reader_io_process_input, self);
   java_reader_start_watches(self); 
 
@@ -250,8 +380,10 @@ java_reader_deinit(LogPipe *s)
 
   iv_event_unregister(&self->schedule_wakeup);
   java_reader_stop_watches(self);
+  
+  java_reader_proxy_close(self->proxy);
 
-  if(!java_reader_proxy_deinit(self->proxy))
+  if (!java_reader_proxy_deinit(self->proxy))
     return FALSE;
 
   if (!log_source_deinit(s))
@@ -284,7 +416,7 @@ java_reader_set_options(JavaReader *s, LogPipe *control, JavaReaderOptions *opti
 {
   JavaReader *self = (JavaReader *) s;
 
-  log_source_set_options(&self->super, &options->super, stats_level, stats_source, stats_id, stats_instance, (options->flags & LR_THREADED), FALSE, control->expr_node);
+  log_source_set_options(&self->super, &options->super, stats_level, stats_source, stats_id, stats_instance, (options->flags & LR_THREADED), TRUE, control->expr_node);
 
   log_pipe_unref(self->control);
   log_pipe_ref(control);

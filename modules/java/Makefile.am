@@ -56,14 +56,10 @@ modules_java_libmod_java_la_SOURCES = \
     modules/java/native/java-parser.h \
     modules/java/native/java_machine.c \
     modules/java/native/java_machine.h \
-    modules/java/native/java-filter.h \
-    modules/java/native/java-filter.c \
     modules/java/native/modjava-parser.c \
     modules/java/native/modjava-parser.h \
     modules/java/native/java-filter.h \
     modules/java/native/java-filter.c \
-    modules/java/native/java-parser.h \
-    modules/java/native/java-parser.c \
     modules/java/native/java-helpers.h \
     modules/java/native/java-helpers.c \
     modules/java/native/java-preferences.h \

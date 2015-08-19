@@ -22,6 +22,7 @@
 
 #include "java-helpers.h"
 #include "messages.h"
+#include "string.h"
 
 gchar*
 normalize_key(const gchar *buffer)
@@ -75,3 +76,20 @@ clone_java_preferences(JavaPreferences *src, JavaPreferences *dst)
 
   clone_java_options(src->options, dst->options);
 }
+
+gchar *
+java_str_dup(JNIEnv *env, jstring java_string)
+{
+  gchar *result = NULL;
+  gchar *c_string = NULL;
+
+  c_string = (gchar *) CALL_JAVA_FUNCTION(env, GetStringUTFChars, java_string, NULL);
+  if (strlen(c_string) == 0)
+    goto exit;
+
+  result = strdup(c_string);
+exit:
+  CALL_JAVA_FUNCTION(env, ReleaseStringUTFChars, java_string, c_string);
+  return result;
+}
+

@@ -24,8 +24,13 @@ package org.syslog_ng;
 
 public class DummySource extends LogReader {
 
+    long last_msg_sent;
+    int msg_count;
+    final static long TIMEOUT = 5000;
+
     public DummySource(long pipeHandle) {
         super(pipeHandle);
+        last_msg_sent = 0;
     }
 
     public void deinit() {
@@ -53,13 +58,41 @@ public class DummySource extends LogReader {
 
     public boolean isReadable() {
         InternalMessageSender.debug("isReadable");
-        return true;
+        if (last_msg_sent == 0 || System.currentTimeMillis() > last_msg_sent + TIMEOUT)
+          {
+            return true;
+          }
+        return false;
+    }
+
+    public String getBookmark() {
+        return Integer.toString(msg_count);
+    }
+
+    public boolean seekToBookmark(String bookmark) {
+        try {
+            msg_count = Integer.parseInt(bookmark);
+            return true;
+        } catch (NumberFormatException e) {
+            InternalMessageSender.error("Bad bookmark: " + bookmark);
+            return false;
+        }
     }
 
     public boolean fetch(LogMessage msg) {
-        msg.setValue("MSG", "Hello from Java!");
+        long t = System.currentTimeMillis();
+        if (last_msg_sent == 0 || t > last_msg_sent + TIMEOUT)
+          {
+            msg.setValue("MSG", "Hello from Java! " + msg_count);
+            last_msg_sent = t;
+            msg_count++;
+            return true;
+          }
+        return false;
+    }
 
-        return true;
+    public String getNameByUniqOptions() {
+        return "DUMMY";
     }
 }
 
