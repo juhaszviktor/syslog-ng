@@ -1,4 +1,6 @@
 #include "poll-follow-events.h"
+#include "timeutils.h"
+#include "messages.h"
 
 
 static void
