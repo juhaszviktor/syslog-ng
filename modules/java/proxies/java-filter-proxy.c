@@ -41,6 +41,7 @@ struct _JavaFilterProxy
   JavaVMSingleton *java_machine;
   jclass loaded_class;
   JavaFilterImpl filter_impl;
+  JavaLogMessageProxy *msg_builder;
 };
 
 static gboolean
@@ -87,6 +88,10 @@ java_filter_proxy_free(JavaFilterProxy *self)
     {
       CALL_JAVA_FUNCTION(env, DeleteLocalRef, self->loaded_class);
     }
+  if (self->msg_builder)
+    {
+      java_log_message_proxy_free(self->msg_builder);
+    }
   java_machine_unref(self->java_machine);
   g_free(self);
 }
@@ -101,6 +106,12 @@ java_filter_proxy_new(const gchar *class_name, const gchar *class_path, gpointer
       goto error;
 
   if (!__load_filter_object(self, class_name, class_path, handle))
+    {
+      goto error;
+    }
+
+  self->msg_builder = java_log_message_proxy_new();
+  if (!self->msg_builder)
     {
       goto error;
     }
@@ -127,10 +138,9 @@ java_filter_proxy_eval(JavaFilterProxy *self, LogMessage *msg)
 {
   jboolean result;
   JNIEnv *env = java_machine_get_env(self->java_machine, &env);
-  JavaLogMessageProxy *jmsg = java_log_message_proxy_new(msg);
+  jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
 
-  result = CALL_JAVA_FUNCTION(env, CallBooleanMethod, self->filter_impl.filter_object, self->filter_impl.mi_eval, java_log_message_proxy_get_java_object(jmsg));
-  java_log_message_proxy_free(jmsg);
+  result = CALL_JAVA_FUNCTION(env, CallBooleanMethod, self->filter_impl.filter_object, self->filter_impl.mi_eval, jmsg);
 
   return !!(result);
 }

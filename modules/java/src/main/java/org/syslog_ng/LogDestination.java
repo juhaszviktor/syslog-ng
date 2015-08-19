@@ -96,7 +96,7 @@ public abstract class LogDestination extends LogPipe {
 			return getNameByUniqOptions();
 		}
 		catch (Exception e) {
-			sendExceptionMessage(e);
+			InternalMessageSender.sendExceptionMessage(e);
 			return null;
 		}
 	}

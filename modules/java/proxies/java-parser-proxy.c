@@ -42,6 +42,7 @@ struct _JavaParserProxy
   JavaVMSingleton *java_machine;
   jclass loaded_class;
   JavaParserImpl parser_impl;
+  JavaLogMessageProxy *msg_builder;
 };
 
 static gboolean
@@ -78,11 +79,7 @@ java_parser_proxy_process(JavaParserProxy *self, LogMessage *msg, const gchar *i
 {
   jboolean result;
   JNIEnv *env = java_machine_get_env(self->java_machine, &env);
-  JavaLogMessageProxy *jmsg = java_log_message_proxy_new(msg);
-  if (!jmsg)
-    {
-      return FALSE;
-    }
+  jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
 
   jstring jinput = CALL_JAVA_FUNCTION(env, NewStringUTF, input);
   if (!jinput)
@@ -94,11 +91,10 @@ java_parser_proxy_process(JavaParserProxy *self, LogMessage *msg, const gchar *i
                               CallBooleanMethod,
                               self->parser_impl.parser_object,
                               self->parser_impl.mi_process,
-                              java_log_message_proxy_get_java_object(jmsg),
+                              jmsg,
                               jinput);
 
   CALL_JAVA_FUNCTION(env, DeleteLocalRef, jinput);
-  java_log_message_proxy_free(jmsg);
 
   return !!(result);
 }
@@ -117,6 +113,10 @@ java_parser_proxy_free(JavaParserProxy *self)
     {
       CALL_JAVA_FUNCTION(env, DeleteLocalRef, self->loaded_class);
     }
+  if (self->msg_builder)
+    {
+      java_log_message_proxy_free(self->msg_builder);
+    }
   java_machine_unref(self->java_machine);
   g_free(self);
 }
@@ -131,6 +131,12 @@ java_parser_proxy_new(const gchar *class_name, const gchar *class_path, gpointer
       goto error;
 
   if (!__load_parser_object(self, class_name, class_path, handle))
+    {
+      goto error;
+    }
+
+  self->msg_builder = java_log_message_proxy_new();
+  if (!self->msg_builder)
     {
       goto error;
     }

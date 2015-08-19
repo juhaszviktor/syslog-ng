@@ -42,6 +42,7 @@ struct _JavaRewriteProxy
   JavaVMSingleton *java_machine;
   jclass loaded_class;
   JavaRewriteImpl rewrite_impl;
+  JavaLogMessageProxy *msg_builder;
 };
 
 static gboolean
@@ -78,19 +79,13 @@ java_rewrite_proxy_process(JavaRewriteProxy *self, LogMessage *msg)
 {
   jboolean result;
   JNIEnv *env = java_machine_get_env(self->java_machine, &env);
-  JavaLogMessageProxy *jmsg = java_log_message_proxy_new(msg);
-  if (!jmsg)
-    {
-      return FALSE;
-    }
+  jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
 
   result = CALL_JAVA_FUNCTION(env,
                               CallBooleanMethod,
                               self->rewrite_impl.rewrite_object,
                               self->rewrite_impl.mi_process,
-                              java_log_message_proxy_get_java_object(jmsg));
-
-  java_log_message_proxy_free(jmsg);
+                              jmsg);
 
   return !!(result);
 }
@@ -109,6 +104,10 @@ java_rewrite_proxy_free(JavaRewriteProxy *self)
     {
       CALL_JAVA_FUNCTION(env, DeleteLocalRef, self->loaded_class);
     }
+  if (self->msg_builder)
+    {
+      java_log_message_proxy_free(self->msg_builder);
+    }
   java_machine_unref(self->java_machine);
   g_free(self);
 }
@@ -123,6 +122,12 @@ java_rewrite_proxy_new(const gchar *class_name, const gchar *class_path, gpointe
       goto error;
 
   if (!__load_rewrite_object(self, class_name, class_path, handle))
+    {
+      goto error;
+    }
+
+  self->msg_builder = java_log_message_proxy_new();
+  if (!self->msg_builder)
     {
       goto error;
     }

@@ -49,23 +49,49 @@ modules_java_libmod_java_la_SOURCES = \
     modules/java/native/java-grammar.y \
     modules/java/native/java-plugin.c \
     modules/java/native/java-destination.c \
+    modules/java/native/java-destination.h \
     modules/java/native/java-class-loader.c \
     modules/java/native/java-class-loader.h \
     modules/java/native/java-parser.c \
     modules/java/native/java-parser.h \
     modules/java/native/java_machine.c \
     modules/java/native/java_machine.h \
-    modules/java/native/java-destination.h \
     modules/java/native/java-filter.h \
     modules/java/native/java-filter.c \
-    modules/java/native/java-parser.c \
+    modules/java/native/modjava-parser.c \
+    modules/java/native/modjava-parser.h \
+    modules/java/native/java-filter.h \
+    modules/java/native/java-filter.c \
     modules/java/native/java-parser.h \
+    modules/java/native/java-parser.c \
+    modules/java/native/java-helpers.h \
+    modules/java/native/java-helpers.c \
+    modules/java/native/java-preferences.h \
+    modules/java/native/java-preferences.c \
+    modules/java/native/java-reader.h \
+    modules/java/native/java-reader.c \
+    modules/java/native/java-rewrite.h \
+    modules/java/native/java-rewrite.c \
+    modules/java/native/java-source.h \
+    modules/java/native/java-source.c \
+    modules/java/native/poll-follow-events.h \
+    modules/java/native/poll-follow-events.c \
     modules/java/proxies/java-destination-proxy.c \
     modules/java/proxies/java-destination-proxy.h \
     modules/java/proxies/java-logmsg-proxy.c \
     modules/java/proxies/java-logmsg-proxy.h \
     modules/java/proxies/java-template-proxy.c \
     modules/java/proxies/java-template-proxy.h \
+    modules/java/proxies/java-filter-proxy.c \
+    modules/java/proxies/java-filter-proxy.h \
+    modules/java/proxies/java-rewrite-proxy.c \
+    modules/java/proxies/java-rewrite-proxy.h \
+    modules/java/proxies/java-parser-proxy.c \
+    modules/java/proxies/java-parser-proxy.h \
+    modules/java/proxies/java-reader-proxy.c \
+    modules/java/proxies/java-reader-proxy.h \
+    modules/java/proxies/java-logtag-proxy.c \
+    modules/java/proxies/java-logtag-proxy.h \
     modules/java/proxies/internal-message-sender-proxy.c
 
 modules_java_libmod_java_la_LIBADD =  $(JNI_LIBS)
@@ -88,13 +114,27 @@ JAVA_FILES = \
     $(JAVA_SRC_DIR)/TextLogDestination.java \
     $(JAVA_SRC_DIR)/StructuredLogDestination.java \
     $(JAVA_SRC_DIR)/DummyTextDestination.java \
-    $(JAVA_SRC_DIR)/DummyStructuredDestination.java
+    $(JAVA_SRC_DIR)/DummyStructuredDestination.java \
+    $(JAVA_SRC_DIR)/LogTag.java \
+    $(JAVA_SRC_DIR)/LogRewrite.java \
+    $(JAVA_SRC_DIR)/LogParser.java \
+    $(JAVA_SRC_DIR)/FilterExprNode.java \
+    $(JAVA_SRC_DIR)/LogReader.java \
+    $(JAVA_SRC_DIR)/DummyRewrite.java \
+    $(JAVA_SRC_DIR)/DummySource.java \
+    $(JAVA_SRC_DIR)/KeyValueParser.java \
+    $(JAVA_SRC_DIR)/RandomFilter.java
 
 JAVA_HEADER_FILES = \
    $(top_builddir)/modules/java/org_syslog_ng_LogDestination.h \
    $(top_builddir)/modules/java/org_syslog_ng_LogMessage.h \
    $(top_builddir)/modules/java/org_syslog_ng_LogTemplate.h \
-   $(top_builddir)/modules/java/org_syslog_ng_InternalMessageSender.h
+   $(top_builddir)/modules/java/org_syslog_ng_InternalMessageSender.h \
+   $(top_builddir)/modules/java/org_syslog_ng_LogTag.h \
+   $(top_builddir)/modules/java/org_syslog_ng_FilterExprNode.h \
+   $(top_builddir)/modules/java/org_syslog_ng_LogRewrite.h \
+   $(top_builddir)/modules/java/org_syslog_ng_LogParser.h \
+   $(top_builddir)/modules/java/org_syslog_ng_LogReader.h
 
 $(JAVA_HEADER_FILES): java-headers
 
