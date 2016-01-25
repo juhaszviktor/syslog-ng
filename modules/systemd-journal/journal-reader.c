@@ -597,6 +597,11 @@ journal_reader_options_init(JournalReaderOptions *options, GlobalConfig *cfg, co
   if (options->recv_time_zone_info == NULL)
     options->recv_time_zone_info = time_zone_info_new(options->recv_time_zone);
 
+  if (options->prefix == NULL && cfg_is_config_version_older(cfg, 0x0308))
+    {
+      options->prefix = g_strdup(".journald.");
+    }
+
   options->initialized = TRUE;
 }
 
