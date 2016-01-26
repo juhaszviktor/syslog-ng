@@ -149,7 +149,7 @@ __reader_wakeup(LogSource *s)
 }
 
 static void
-__map_key_value_pairs_to_syslog_macros(LogMessage *msg, gchar *key, gchar *value, gssize value_len)
+_map_key_value_pairs_to_syslog_macros(LogMessage *msg, gchar *key, gchar *value, gssize value_len)
 {
   if (strcmp(key, "MESSAGE") == 0)
     {
@@ -177,7 +177,7 @@ __map_key_value_pairs_to_syslog_macros(LogMessage *msg, gchar *key, gchar *value
 }
 
 static void
-__fill_message(JournalReaderOptions *options, LogMessage *msg, gchar *key, gchar *value, gssize value_len)
+_fill_message(JournalReaderOptions *options, LogMessage *msg, gchar *key, gchar *value, gssize value_len)
 {
   if (!options->prefix)
     {
@@ -200,8 +200,8 @@ __handle_data(gchar *key, gchar *value, gpointer user_data)
   JournalReaderOptions *options = args[1];
   gssize value_len = MIN(strlen(value), options->max_field_size);
 
-  __map_key_value_pairs_to_syslog_macros(msg, key, value, value_len);
-  __fill_message(options, msg, key, value, value_len);
+  _map_key_value_pairs_to_syslog_macros(msg, key, value, value_len);
+  _fill_message(options, msg, key, value, value_len);
 }
 
 static void
