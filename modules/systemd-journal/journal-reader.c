@@ -221,7 +221,7 @@ _get_value(JournalReaderOptions *options, LogMessage *msg,  gchar *key, gssize *
 }
 
 static void
-__set_program(JournalReaderOptions *options, LogMessage *msg)
+_set_program(JournalReaderOptions *options, LogMessage *msg)
 {
   gssize value_length = 0;
   const gchar *value = _get_value(options, msg, "SYSLOG_IDENTIFIER", &value_length);
@@ -263,7 +263,7 @@ __handle_message(JournalReader *self)
 
   journald_foreach_data(self->journal, __handle_data, args);
   __set_message_timestamp(self, msg);
-  __set_program(self->options, msg);
+  _set_program(self->options, msg);
 
   log_source_post(&self->super, msg);
   return log_source_free_to_send(&self->super);
