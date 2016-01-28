@@ -1,0 +1,5 @@
+project.buildDir = syslogBuildDir+'/simple-file/gradle'
+
+dependencies {
+   compile name: 'syslog-ng-core'
+}
