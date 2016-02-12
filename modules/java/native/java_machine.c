@@ -30,7 +30,7 @@
 struct _JavaVMSingleton
 {
   GAtomicCounter ref_cnt;
-  JavaVMOption options[3];
+  JavaVMOption options[4];
   JNIEnv *env;
   JavaVM *jvm;
   JavaVMInitArgs vm_args;
@@ -102,9 +102,10 @@ java_machine_start(JavaVMSingleton* self)
           "-Djava.library.path=%s", module_path);
 
       self->options[2].optionString = g_strdup("-Xrs");
+      self->options[3].optionString = g_strdup("-Xmx1g");
 
       self->vm_args.version = JNI_VERSION_1_6;
-      self->vm_args.nOptions = 3;
+      self->vm_args.nOptions = 4;
       self->vm_args.options = self->options;
       status = JNI_CreateJavaVM(&self->jvm, (void**) &self->env,
                                 &self->vm_args);
