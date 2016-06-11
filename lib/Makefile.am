@@ -108,6 +108,7 @@ pkginclude_HEADERS			+= \
 	lib/logsource.h			\
 	lib/logstamp.h			\
 	lib/logthrdestdrv.h		\
+	lib/logthrsourcedrv.h \
 	lib/logwriter.h			\
 	lib/mainloop.h			\
 	lib/mainloop-call.h		\
@@ -191,6 +192,7 @@ lib_libsyslog_ng_la_SOURCES		= \
 	lib/logsource.c			\
 	lib/logstamp.c			\
 	lib/logthrdestdrv.c		\
+	lib/logthrsourcedrv.c		\
 	lib/logwriter.c			\
 	lib/mainloop.c			\
 	lib/mainloop-call.c		\
