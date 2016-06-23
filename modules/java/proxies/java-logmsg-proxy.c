@@ -70,6 +70,31 @@ Java_org_syslog_1ng_LogMessage_getValue(JNIEnv *env, jobject obj, jlong handle, 
     }
 }
 
+JNIEXPORT void JNICALL
+Java_org_syslog_1ng_LogMessage_setValue(JNIEnv *env, jobject obj, jlong handle, jstring name, jstring value)
+{
+  LogMessage *msg = (LogMessage *)handle;
+
+
+  const char *name_str = (*env)->GetStringUTFChars(env, name, NULL);
+  if (name_str == NULL)
+    {
+      return;
+    }
+
+  const char *value_str = (*env)->GetStringUTFChars(env, value, NULL);
+  if (value_str == NULL)
+    {
+      return;
+    }
+
+  log_msg_set_value_by_name(msg, name_str, value_str, strlen(value_str));
+
+  (*env)->ReleaseStringUTFChars(env, name, name_str);
+  (*env)->ReleaseStringUTFChars(env, value, value_str);
+
+}
+
 static gboolean
 __load_object(JavaLogMessageProxy *self)
 {

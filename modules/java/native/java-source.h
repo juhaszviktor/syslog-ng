@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2014 Balabit
- * Copyright (c) 2014 Viktor Juhasz <viktor.juhasz@balabit.com>
+ * Copyright (c) 2002-2016 BalaBit
+ * Copyright (c) 2009-2016 Viktor Juhász
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,16 +22,21 @@
  *
  */
 
-#ifndef MODJAVA_PARSER_H_INCLUDED
-#define MODJAVA_PARSER_H_INCLUDED
+#pragma once
 
-#include "cfg-parser.h"
-#include "cfg-lexer.h"
-#include "java-destination.h"
-#include "java-source.h"
+#include "logthrsourcedrv.h"
+#include "proxies/java-source-proxy.h"
 
-extern CfgParser java_parser;
+typedef struct
+{
+  LogThrSourceDriver super;
+  JavaSourceProxy *proxy;
+  GString *class_path;
+  gchar *class_name;
+  GHashTable *options;
+} JavaSourceDriver;
 
-CFG_PARSER_DECLARE_LEXER_BINDING(java_, LogDriver **)
-
-#endif
+LogDriver *java_sd_new(GlobalConfig *cfg);
+void java_sd_set_class_path(LogDriver *s, const gchar *class_path);
+void java_sd_set_class_name(LogDriver *s, const gchar *class_name);
+void java_sd_set_option(LogDriver *s, const gchar *key, const gchar *value);

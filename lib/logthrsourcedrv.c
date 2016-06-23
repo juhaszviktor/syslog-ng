@@ -518,8 +518,8 @@ _worker_thread_stop(gpointer arg)
   iv_event_post(&self->shutdown_event);
 }
 
-static gboolean
-_init(LogPipe *s)
+gboolean
+log_threaded_source_driver_init_method(LogPipe *s)
 {
   LogThrSourceDriver *self = (LogThrSourceDriver *)s;
 
@@ -589,7 +589,7 @@ log_threaded_source_driver_init_instance(LogThrSourceDriver *self, GlobalConfig 
   self->worker_opened = FALSE;
   self->time_reopen = cfg->time_reopen;
 
-  self->super.super.super.init = _init;
+  self->super.super.super.init = log_threaded_source_driver_init_method;
   self->super.super.super.deinit = log_threaded_source_driver_deinit_method;
   self->super.super.super.free_fn = log_threaded_source_driver_free;
 }

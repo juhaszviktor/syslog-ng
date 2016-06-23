@@ -58,6 +58,11 @@ start
             last_driver = *instance = java_dd_new(configuration);
           }
           '(' java_dest_options ')'		{ YYACCEPT; }
+        | LL_CONTEXT_SOURCE KW_JAVA
+          {
+          	last_driver = *instance = java_sd_new(configuration);
+          }
+          '(' java_source_options ')' { YYACCEPT; }
         ;
 
 java_dest_options
@@ -90,6 +95,33 @@ java_dest_custom_options
 
 java_dest_custom_option
   : LL_STRING LL_STRING { java_dd_set_option(last_driver, $1, $2); free($1); free($2); }
+  
+java_source_options
+        : java_source_option java_source_options
+        |
+        ;
+
+java_source_option
+        : KW_CLASS_PATH '(' string ')'
+          {
+          	java_sd_set_class_path(last_driver, $3);
+            free($3);
+          }
+        | KW_CLASS_NAME '(' string ')'
+          {
+          	java_sd_set_class_name(last_driver, $3);
+            free($3);
+          }
+        | KW_OPTION '(' java_source_custom_options ')'
+        ;
+        
+java_source_custom_options
+  : java_source_custom_option java_source_custom_options
+  |
+  ;
+
+java_source_custom_option
+  : LL_STRING LL_STRING { java_sd_set_option(last_driver, $1, $2); free($1); free($2); }
 
 /* INCLUDE_RULES */
 

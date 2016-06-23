@@ -9,6 +9,10 @@ SYSLOG_NG_CORE_LIBS_DIR=$(top_builddir)/modules/java/syslog-ng-core/libs
 
 LogDestination_CLASS_DEPS = \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class
+	
+LogSource_CLASS_DEPS = \
+	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class \
+	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogMessage.class
 
 LogPipe_CLASS_DEPS = \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/InternalMessageSender.class
@@ -32,6 +36,9 @@ DummyTextDestination_CLASS_DEPS = \
 DummyStructuredDestination_CLASS_DEPS = \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/StructuredLogDestination.class \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/InternalMessageSender.class
+
+DummySource_CLASS_DEPS = \
+  $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogSource.class
 
 java-headers: $(JAVA_HEADER_FILES)
 
@@ -86,13 +93,17 @@ modules_java_libmod_java_la_SOURCES = \
     modules/java/native/java_machine.c \
     modules/java/native/java_machine.h \
     modules/java/native/java-destination.h \
+    modules/java/native/java-source.h \
+    modules/java/native/java-source.c \
     modules/java/proxies/java-destination-proxy.c \
     modules/java/proxies/java-destination-proxy.h \
     modules/java/proxies/java-logmsg-proxy.c \
     modules/java/proxies/java-logmsg-proxy.h \
     modules/java/proxies/java-template-proxy.c \
     modules/java/proxies/java-template-proxy.h \
-    modules/java/proxies/internal-message-sender-proxy.c
+    modules/java/proxies/internal-message-sender-proxy.c \
+    modules/java/proxies/java-source-proxy.c \
+    modules/java/proxies/java-source-proxy.h
 
 modules_java_libmod_java_la_LIBADD =  $(JNI_LIBS) $(MODULE_DEPS_LIBS)
 
@@ -109,10 +120,13 @@ JAVA_FILES = \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogTemplate.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogPipe.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogDestination.java \
+    $(SYSLOG_NG_CORE_SRC_DIR)/LogSource.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/TextLogDestination.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/StructuredLogDestination.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/DummyTextDestination.java \
-    $(SYSLOG_NG_CORE_SRC_DIR)/DummyStructuredDestination.java
+    $(SYSLOG_NG_CORE_SRC_DIR)/DummyStructuredDestination.java \
+    $(SYSLOG_NG_CORE_SRC_DIR)/DummySource.java
+  
 
 JAVA_HEADER_FILES = \
    $(JAVA_BUILDDIR)/org_syslog_ng_LogMessage.h \
@@ -127,10 +141,12 @@ JAVA_CLASS_FILES = \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogTemplate.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogDestination.class \
+   $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogSource.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/TextLogDestination.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/StructuredLogDestination.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/DummyTextDestination.class \
-   $(SYSLOG_NG_CORE_PACKAGE_DIR)/DummyStructuredDestination.class
+   $(SYSLOG_NG_CORE_PACKAGE_DIR)/DummyStructuredDestination.class \
+   $(SYSLOG_NG_CORE_PACKAGE_DIR)/DummySource.class
 
 endif
 

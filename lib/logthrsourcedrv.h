@@ -110,6 +110,7 @@ struct _LogThrSourceDriver
 
 void log_threaded_source_driver_init_instance(LogThrSourceDriver *self, GlobalConfig *cfg);
 gboolean log_threaded_source_driver_deinit_method(LogPipe *s);
+gboolean log_threaded_source_driver_init_method(LogPipe *s);
 void log_threaded_source_driver_free(LogPipe *s);
 void log_threaded_source_wakeup(LogThrSourceDriver *self);
 void log_threaded_source_set_poll_events(LogThrSourceDriver *self, PollEvents *poll_events);
