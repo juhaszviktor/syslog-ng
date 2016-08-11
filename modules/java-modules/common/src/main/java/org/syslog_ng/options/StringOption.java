@@ -24,21 +24,21 @@
 
 package org.syslog_ng.options;
 
-import org.syslog_ng.LogDestination;
+import org.syslog_ng.Optionable;
 import org.syslog_ng.LogMessage;
 
 public class StringOption implements Option {
-	private LogDestination owner;
+	private Optionable owner;
 	private String name;
 	private String defaultValue;
 
-	public StringOption(LogDestination owner, String name, String defaultValue) {
+	public StringOption(Optionable owner, String name, String defaultValue) {
 		this.owner = owner;
 		this.name = name;
 		this.defaultValue = defaultValue;
 	}
 
-	public StringOption(LogDestination owner, String name) {
+	public StringOption(Optionable owner, String name) {
 		this(owner, name, null);
 	}
 

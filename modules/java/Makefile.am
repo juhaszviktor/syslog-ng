@@ -8,10 +8,12 @@ SYSLOG_NG_CORE_PACKAGE_DIR=$(top_builddir)/modules/java/syslog-ng-core/classes/o
 SYSLOG_NG_CORE_LIBS_DIR=$(top_builddir)/modules/java/syslog-ng-core/libs
 
 LogDestination_CLASS_DEPS = \
-	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class
+	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class \
+	$(SYSLOG_NG_CORE_PACKAGE_DIR)/Optionable.class
 	
 LogSource_CLASS_DEPS = \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class \
+	$(SYSLOG_NG_CORE_PACKAGE_DIR)/Optionable.class \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/LogMessage.class
 
 LogPipe_CLASS_DEPS = \
@@ -119,6 +121,7 @@ JAVA_FILES = \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogMessage.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogTemplate.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogPipe.java \
+    $(SYSLOG_NG_CORE_SRC_DIR)/Optionable.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogDestination.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogSource.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/TextLogDestination.java \
@@ -141,6 +144,7 @@ JAVA_CLASS_FILES = \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogMessage.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogTemplate.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogPipe.class \
+   $(SYSLOG_NG_CORE_PACKAGE_DIR)/Optionable.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogDestination.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogSource.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/TextLogDestination.class \

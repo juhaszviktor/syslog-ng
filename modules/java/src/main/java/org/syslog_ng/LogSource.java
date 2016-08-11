@@ -24,7 +24,7 @@
 
 package org.syslog_ng;
 
-public abstract class LogSource extends LogPipe {
+public abstract class LogSource extends LogPipe implements Optionable {
 
 	public static int SUCCESS = 0;
 	public static int NOTHING_TO_READ = 1;

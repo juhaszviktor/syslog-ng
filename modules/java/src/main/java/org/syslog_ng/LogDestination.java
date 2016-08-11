@@ -24,7 +24,7 @@
 
 package org.syslog_ng;
 
-public abstract class LogDestination extends LogPipe {
+public abstract class LogDestination extends LogPipe implements Optionable {
 
 	public LogDestination(long pipeHandle) {
 		super(pipeHandle);
