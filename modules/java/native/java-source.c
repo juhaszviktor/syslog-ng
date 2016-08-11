@@ -25,6 +25,34 @@
 #include "java-source.h"
 #include "java_machine.h"
 #include "str-utils.h"
+#include "org_syslog_ng_LogSource.h"
+
+
+JNIEXPORT jstring JNICALL
+Java_org_syslog_1ng_LogSource_getOption(JNIEnv *env, jobject obj, jlong s, jstring key)
+{
+  JavaSourceDriver *self = (JavaSourceDriver *)s;
+  gchar *value;
+  const char *key_str = (*env)->GetStringUTFChars(env, key, NULL);
+  if (key_str == NULL)
+    {
+      return NULL;
+    }
+  gchar *normalized_key = g_strdup(key_str);
+  normalized_key = __normalize_key(normalized_key);
+  value = g_hash_table_lookup(self->options, normalized_key);
+  (*env)->ReleaseStringUTFChars(env, key, key_str);  // release resources
+  g_free(normalized_key);
+
+  if (value && value[0] != '\0')
+    {
+      return (*env)->NewStringUTF(env, value);
+    }
+  else
+    {
+      return NULL;
+    }
+}
 
 static gboolean
 _init(LogPipe *s)

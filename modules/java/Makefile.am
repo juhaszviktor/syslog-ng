@@ -132,7 +132,8 @@ JAVA_HEADER_FILES = \
    $(JAVA_BUILDDIR)/org_syslog_ng_LogMessage.h \
    $(JAVA_BUILDDIR)/org_syslog_ng_LogDestination.h \
    $(JAVA_BUILDDIR)/org_syslog_ng_LogTemplate.h \
-   $(JAVA_BUILDDIR)/org_syslog_ng_InternalMessageSender.h
+   $(JAVA_BUILDDIR)/org_syslog_ng_InternalMessageSender.h \
+   $(JAVA_BUILDDIR)/org_syslog_ng_LogSource.h
 
 JAVA_CLASS_FILES = \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/InternalMessageSender.class \
