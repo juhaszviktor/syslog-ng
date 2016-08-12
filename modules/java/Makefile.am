@@ -40,6 +40,9 @@ DummyStructuredDestination_CLASS_DEPS = \
 	$(SYSLOG_NG_CORE_PACKAGE_DIR)/InternalMessageSender.class
 
 DummySource_CLASS_DEPS = \
+  $(SYSLOG_NG_CORE_PACKAGE_DIR)/PositionTrackedLogSource.class
+
+PositionTrackedLogSource_CLASS_DEPS = \
   $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogSource.class
 
 java-headers: $(JAVA_HEADER_FILES)
@@ -124,6 +127,7 @@ JAVA_FILES = \
     $(SYSLOG_NG_CORE_SRC_DIR)/Optionable.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogDestination.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/LogSource.java \
+    $(SYSLOG_NG_CORE_SRC_DIR)/PositionTrackedLogSource.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/TextLogDestination.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/StructuredLogDestination.java \
     $(SYSLOG_NG_CORE_SRC_DIR)/DummyTextDestination.java \
@@ -147,6 +151,7 @@ JAVA_CLASS_FILES = \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/Optionable.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogDestination.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/LogSource.class \
+   $(SYSLOG_NG_CORE_PACKAGE_DIR)/PositionTrackedLogSource.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/TextLogDestination.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/StructuredLogDestination.class \
    $(SYSLOG_NG_CORE_PACKAGE_DIR)/DummyTextDestination.class \

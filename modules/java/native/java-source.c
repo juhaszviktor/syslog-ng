@@ -68,6 +68,8 @@ _init(LogPipe *s)
     {
       return FALSE;
     }
+
+  self->super.is_pos_tracked = java_source_proxy_is_pos_tracked(self->proxy);
   return log_threaded_source_driver_init_method(s);
 }
 

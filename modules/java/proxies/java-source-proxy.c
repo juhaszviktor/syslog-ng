@@ -35,6 +35,7 @@ typedef struct _JavaMethod
   jmethodID method_id;
   const gchar *name;
   const gchar *signature;
+  gboolean optional;
 } JavaMethod;
 
 
@@ -78,19 +79,19 @@ struct _JavaSourceProxy
 static void
 _init_java_source_impl_instance(JavaSourceImpl *self)
 {
-  self->methods.constructor = (JavaMethod){.name = "<init>", .signature = "(J)V"};
-  self->methods.init = (JavaMethod){.name = "initProxy", .signature = "()Z"};
-  self->methods.deinit = (JavaMethod){.name = "deinitProxy", .signature = "()V"};
-  self->methods.read_message = (JavaMethod){.name = "readMessageProxy", .signature = "(Lorg/syslog_ng/LogMessage;)I"};
-  self->methods.open = (JavaMethod){.name = "openProxy",  .signature = "()Z"};
-  self->methods.close = (JavaMethod){.name = "closeProxy", .signature = "()V"};
-  self->methods.ack = (JavaMethod){.name = "ackProxy", .signature = "(Lorg/syslog_ng/LogMessage;)V"};
-  self->methods.nack = (JavaMethod){.name = "nackProxy", .signature = "(Lorg/syslog_ng/LogMessage;)V"};
-  self->methods.is_readable = (JavaMethod){.name = "isReadableProxy", .signature = "()Z"};
-  self->methods.get_stats_instance = (JavaMethod){.name = "getStatsInstanceProxy", .signature = "()Ljava/lang/String;"};
-  self->methods.get_persist_name = (JavaMethod){.name = "getPersistNameProxy", .signature = "()Ljava/lang/String;"};
-  self->methods.get_cursor = (JavaMethod){.name = "getCursorProxy", .signature = "()Ljava/lang/String;"};
-  self->methods.seek_to_cursor = (JavaMethod){.name = "seekToCursorProxy", .signature = "(Ljava/lang/String;)Z"};
+  self->methods.constructor = (JavaMethod){.name = "<init>", .signature = "(J)V", .optional = FALSE};
+  self->methods.init = (JavaMethod){.name = "initProxy", .signature = "()Z", .optional = FALSE};
+  self->methods.deinit = (JavaMethod){.name = "deinitProxy", .signature = "()V", .optional = FALSE};
+  self->methods.read_message = (JavaMethod){.name = "readMessageProxy", .signature = "(Lorg/syslog_ng/LogMessage;)I", .optional = FALSE};
+  self->methods.open = (JavaMethod){.name = "openProxy",  .signature = "()Z", .optional = FALSE};
+  self->methods.close = (JavaMethod){.name = "closeProxy", .signature = "()V", .optional = FALSE};
+  self->methods.ack = (JavaMethod){.name = "ackProxy", .signature = "(Lorg/syslog_ng/LogMessage;)V", .optional = TRUE};
+  self->methods.nack = (JavaMethod){.name = "nackProxy", .signature = "(Lorg/syslog_ng/LogMessage;)V", .optional = TRUE};
+  self->methods.is_readable = (JavaMethod){.name = "isReadableProxy", .signature = "()Z", .optional = FALSE};
+  self->methods.get_stats_instance = (JavaMethod){.name = "getStatsInstanceProxy", .signature = "()Ljava/lang/String;", .optional = FALSE};
+  self->methods.get_persist_name = (JavaMethod){.name = "getPersistNameProxy", .signature = "()Ljava/lang/String;", .optional = FALSE};
+  self->methods.get_cursor = (JavaMethod){.name = "getCursorProxy", .signature = "()Ljava/lang/String;", .optional = TRUE};
+  self->methods.seek_to_cursor = (JavaMethod){.name = "seekToCursorProxy", .signature = "(Ljava/lang/String;)Z", .optional = TRUE};
 }
 
 static jmethodID
@@ -109,7 +110,7 @@ _load_source_methods(JNIEnv *env, JavaSourceProxy *self)
   gint number_of_methods = sizeof(self->source_impl.methods) / sizeof(JavaMethod);
   for (i = 0; i < number_of_methods; i++)
     {
-      if (!_load_source_method(env, self->loaded_class, &methods[i]))
+      if (!_load_source_method(env, self->loaded_class, &methods[i]) && &methods[i].optional == FALSE)
         {
           msg_error("Can't find method in class",
                     evt_tag_str("class_name", self->class_name),
@@ -193,25 +194,31 @@ java_source_proxy_read_message(JavaSourceProxy *self, LogMessage *msg)
 void
 java_source_proxy_msg_ack(JavaSourceProxy *self, LogMessage *msg)
 {
-  USE_JAVA_ENVIRONMENT(self->java_machine);
-  jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
-  JAVA_FUNCTION(CallVoidMethod,
-        self->source_impl.source_object,
-        self->source_impl.methods.ack.method_id,
-        jmsg);
-  JAVA_FUNCTION(DeleteLocalRef, jmsg);
+  if (self->source_impl.methods.ack.method_id)
+    {
+      USE_JAVA_ENVIRONMENT(self->java_machine);
+      jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
+      JAVA_FUNCTION(CallVoidMethod,
+            self->source_impl.source_object,
+            self->source_impl.methods.ack.method_id,
+            jmsg);
+      JAVA_FUNCTION(DeleteLocalRef, jmsg);
+    }
 }
 
 void
 java_source_proxy_msg_nack(JavaSourceProxy *self, LogMessage *msg)
 {
-  USE_JAVA_ENVIRONMENT(self->java_machine);
-    jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
-    JAVA_FUNCTION(CallVoidMethod,
-          self->source_impl.source_object,
-          self->source_impl.methods.nack.method_id,
-          jmsg);
-    JAVA_FUNCTION(DeleteLocalRef, jmsg);
+  if (self->source_impl.methods.nack.method_id)
+    {
+      USE_JAVA_ENVIRONMENT(self->java_machine);
+      jobject jmsg = java_log_message_proxy_create_java_object(self->msg_builder, msg);
+      JAVA_FUNCTION(CallVoidMethod,
+              self->source_impl.source_object,
+              self->source_impl.methods.nack.method_id,
+              jmsg);
+      JAVA_FUNCTION(DeleteLocalRef, jmsg);
+    }
 }
 
 gboolean
@@ -278,22 +285,36 @@ java_source_proxy_get_persist_name(JavaSourceProxy *self)
 const gchar *
 java_source_proxy_get_cursor(JavaSourceProxy *self)
 {
-  USE_JAVA_ENVIRONMENT(self->java_machine);
-  jstring java_string = (jstring)JAVA_FUNCTION(CallObjectMethod, self->source_impl.source_object, self->source_impl.methods.get_persist_name.method_id);
-  if (!java_string)
+  if (self->source_impl.methods.get_persist_name.method_id)
     {
-      msg_error("Can't get cursor", NULL);
-      return NULL;
+      USE_JAVA_ENVIRONMENT(self->java_machine);
+      jstring java_string = (jstring)JAVA_FUNCTION(CallObjectMethod, self->source_impl.source_object, self->source_impl.methods.get_persist_name.method_id);
+      if (!java_string)
+        {
+          msg_error("Can't get cursor", NULL);
+          return NULL;
+        }
+      return _java_str_dup(env, java_string);
     }
-  return _java_str_dup(env, java_string);
+  return NULL;
 }
 
 gboolean
 java_source_proxy_seek_to_cursor(JavaSourceProxy *self, const gchar *cursor)
 {
-  USE_JAVA_ENVIRONMENT(self->java_machine);
-  jstring jcursor = (*env)->NewStringUTF(env, cursor);
-  return !!(JAVA_FUNCTION(CallBooleanMethod, self->source_impl.source_object, self->source_impl.methods.seek_to_cursor.method_id, jcursor));
+  if (self->source_impl.methods.seek_to_cursor.method_id)
+    {
+      USE_JAVA_ENVIRONMENT(self->java_machine);
+      jstring jcursor = (*env)->NewStringUTF(env, cursor);
+      return !!(JAVA_FUNCTION(CallBooleanMethod, self->source_impl.source_object, self->source_impl.methods.seek_to_cursor.method_id, jcursor));
+    }
+  return TRUE;
+}
+
+gboolean
+java_source_proxy_is_pos_tracked(JavaSourceProxy *self)
+{
+  return !!(self->source_impl.methods.seek_to_cursor.method_id);
 }
 
 void

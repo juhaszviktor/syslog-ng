@@ -44,20 +44,12 @@ public abstract class LogSource extends LogPipe implements Optionable {
 
 	protected abstract int readMessage(LogMessage msg);
 
-	protected abstract void ack(LogMessage msg);
-	
-	protected abstract void nack(LogMessage msg);
-	
 	protected abstract boolean isReadable();
 	
 	protected abstract String getStatsInstance();
 	
 	protected abstract String getPersistName();
 	
-	protected abstract String getCursor();
-	
-	protected abstract boolean seekToCursor(String new_cursor);
-
 	private native String getOption(long ptr, String key);
 
 	public boolean openProxy() {
@@ -93,24 +85,6 @@ public abstract class LogSource extends LogPipe implements Optionable {
 		}
 	}
 
-	public void ackProxy(LogMessage msg) {
-		try {
-			ack(msg);
-		}
-		catch (Exception e) {
-			sendExceptionMessage(e);
-		}
-	}
-	
-	public void nackProxy(LogMessage msg) {
-		try {
-			nack(msg);
-		}
-		catch (Exception e) {
-			sendExceptionMessage(e);
-		}
-	}
-	
 	public boolean isReadableProxy() {
 		try {
 			return isReadable();
@@ -138,26 +112,6 @@ public abstract class LogSource extends LogPipe implements Optionable {
 		catch (Exception e) {
 			sendExceptionMessage(e);
 			return null;
-		}
-	}
-	
-	public String getCursorProxy()	{
-		try {
-			return getCursor();
-		}
-		catch (Exception e) {
-			sendExceptionMessage(e);
-			return null;
-		}
-	}
-	
-	public boolean seekToCursorProxy(String new_cursor) {
-		try {
-			return seekToCursor(new_cursor);
-		}
-		catch (Exception e) {
-			sendExceptionMessage(e);
-			return false;
 		}
 	}
 }

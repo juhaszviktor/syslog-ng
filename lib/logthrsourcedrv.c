@@ -28,6 +28,8 @@
 
 #include <stdlib.h>
 
+#define FETCH_LIMIT 10
+
 struct _LogThreadedSource
 {
   LogSource super;
@@ -298,10 +300,12 @@ _fetch_single_log(LogThrSourceDriver *self, LogMessage *msg)
 static void
 _fetch_logs(LogThrSourceDriver *self)
 {
-  while(!self->suspended)
+  guint32 read_messages = 0;
+  while (!self->suspended && read_messages < FETCH_LIMIT)
     {
       LogMessage *msg = log_msg_new_empty();
       _fetch_single_log(self, msg);
+      read_messages++;
     }
 }
 

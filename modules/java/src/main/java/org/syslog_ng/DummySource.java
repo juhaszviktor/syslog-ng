@@ -23,7 +23,7 @@
  */
 package org.syslog_ng;
 
-public class DummySource extends LogSource {
+public class DummySource extends PositionTrackedLogSource {
 	
 	public DummySource(long handle) {
 		super(handle);
@@ -50,12 +50,6 @@ public class DummySource extends LogSource {
 	protected int readMessage(LogMessage msg) {
 		InternalMessageSender.debug("readMessage");
 		msg.setValue("MSG", "THIS IS A MESSAGE");
-		try {
-		Thread.sleep(1000);
-		} catch (InterruptedException e)
-		{
-			
-		}
 		return 0;
 	}
 
