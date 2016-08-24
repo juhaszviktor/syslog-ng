@@ -45,9 +45,11 @@ public abstract class LogSource extends LogPipe implements Optionable {
 	protected abstract int readMessage(LogMessage msg);
 
 	protected abstract boolean isReadable();
-	
+
+	protected abstract boolean isOpened();
+
 	protected abstract String getStatsInstance();
-	
+
 	protected abstract String getPersistName();
 	
 	private native String getOption(long ptr, String key);
@@ -82,6 +84,16 @@ public abstract class LogSource extends LogPipe implements Optionable {
 		catch (Exception e) {
 			sendExceptionMessage(e);
 			return 1;
+		}
+	}
+
+	public boolean isOpenedProxy() {
+		try {
+			return isOpened();
+		}
+		catch (Exception e) {
+			sendExceptionMessage(e);
+			return false;
 		}
 	}
 

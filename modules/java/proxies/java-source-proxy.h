@@ -45,6 +45,7 @@ const gchar *java_source_proxy_get_persist_name(JavaSourceProxy *self);
 const gchar *java_source_proxy_get_cursor(JavaSourceProxy *self);
 gboolean java_source_proxy_seek_to_cursor(JavaSourceProxy *self, const gchar *cursor);
 gboolean java_source_proxy_is_pos_tracked(JavaSourceProxy *self);
+gboolean java_source_proxy_is_opened(JavaSourceProxy *self);
 
 void java_source_proxy_free(JavaSourceProxy *self);
 

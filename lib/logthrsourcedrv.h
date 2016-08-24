@@ -55,6 +55,7 @@ struct _LogThrSourceDriver
     void (* thread_init)(LogThrSourceDriver *self);
     void (* thread_deinit)(LogThrSourceDriver *self);
     gboolean (*open)(LogThrSourceDriver *self);
+    gboolean (*is_opened)(LogThrSourceDriver *self);
     void (*close)(LogThrSourceDriver *self);
     worker_read_result_t (*read_message)(LogThrSourceDriver *self, LogMessage *msg);
     void (*msg_ack)(LogThrSourceDriver *self, LogMessage *msg);

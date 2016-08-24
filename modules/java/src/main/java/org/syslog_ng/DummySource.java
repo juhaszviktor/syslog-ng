@@ -24,9 +24,14 @@
 package org.syslog_ng;
 
 public class DummySource extends PositionTrackedLogSource {
+
+  private boolean opened;
+  private boolean readable;
 	
 	public DummySource(long handle) {
 		super(handle);
+    opened = false;
+    readable = true;
 	}
 	
 	protected void deinit() {
@@ -40,11 +45,18 @@ public class DummySource extends PositionTrackedLogSource {
 	
 	protected boolean open() {
 		InternalMessageSender.debug("Open");
+    opened = true;
 		return true;
 	}
 
+  protected boolean isOpened() {
+    InternalMessageSender.debug("Open");
+    return opened;
+  }
+
 	protected void close() {
 		InternalMessageSender.debug("Close");
+    opened = false;
 	}
 
 	protected int readMessage(LogMessage msg) {
@@ -63,7 +75,9 @@ public class DummySource extends PositionTrackedLogSource {
 	
 	protected boolean isReadable() {
 		InternalMessageSender.debug("isReadable");
-		return true;
+    readable = !readable;
+    opened = readable;
+		return readable;
 	}
 	
 	protected String getStatsInstance(){

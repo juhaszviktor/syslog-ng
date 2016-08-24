@@ -168,6 +168,13 @@ _seek_to_cursor(LogThrSourceDriver *s, const gchar *new_cursor)
   return java_source_proxy_seek_to_cursor(self->proxy, new_cursor);
 }
 
+static gboolean
+_is_opened(LogThrSourceDriver *s)
+{
+  JavaSourceDriver *self = (JavaSourceDriver *)s;
+  return java_source_proxy_is_opened(self->proxy);
+}
+
 LogDriver *
 java_sd_new(GlobalConfig *cfg)
 {
@@ -188,6 +195,7 @@ java_sd_new(GlobalConfig *cfg)
   self->super.worker.msg_ack = _msg_ack;
   self->super.worker.msg_nack = _msg_nack;
   self->super.worker.is_readable = _is_readable;
+  self->super.worker.is_opened = _is_opened;
 
   self->super.get_stats_instance = _get_stats_instance;
   self->super.pos_tracking.get_persist_name = _get_persist_name;

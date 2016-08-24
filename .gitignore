@@ -38,3 +38,5 @@ m4/ax*.m4
 /test-driver
 .deps
 /lib/cfg-grammar.h
+build
+install

@@ -49,7 +49,7 @@ typedef struct _ThreadedSourceBookmarkData
 } ThreadedSourceBookmarkData;
 
 static void _update_watches(LogThrSourceDriver *self);
-static void _open(LogThrSourceDriver *self);
+static gboolean _open(LogThrSourceDriver *self);
 
 static const gchar *
 _get_stats_instance(LogThrSourceDriver *self)
@@ -178,6 +178,9 @@ _suspend(LogThrSourceDriver *self)
 static void
 _arm_reopen_timer(LogThrSourceDriver *self)
 {
+  msg_info("Try to open source again after time reopen",
+          evt_tag_str("source", _get_stats_instance(self)),
+          evt_tag_int("time_reopen", self->time_reopen));
   iv_validate_now();
   self->timer_reopen.expires = iv_now;
   self->timer_reopen.expires.tv_sec += self->time_reopen;
@@ -192,35 +195,58 @@ _close_and_suspend(LogThrSourceDriver *self)
   _arm_reopen_timer(self);
 }
 
+static gboolean
+_check_worker_opened(LogThrSourceDriver *self)
+{
+  gboolean opened = self->worker_opened;
+  if (self->worker.is_opened)
+    {
+      opened = self->worker.is_opened(self);
+    }
+  return opened;
+}
+
 static void
 _update_watches(LogThrSourceDriver *self)
 {
   g_assert(self->watches_running);
   self->suspended = FALSE;
 
+  self->worker_opened = _check_worker_opened(self);
+
   if (!self->worker_opened)
       {
-        _open(self);
-        return;
+        self->worker_opened = _open(self);
       }
+  if (self->worker_opened)
+    {
 
-  if (!log_source_free_to_send(&self->source->super))
-    {
-      /* wait for message acknowledgment */
-      _suspend(self);
-      return;
-    }
-  if (_is_readable(self))
-    {
-      if (!iv_task_registered(&self->do_work))
+      if (!log_source_free_to_send(&self->source->super))
         {
-          iv_task_register(&self->do_work);
+          /* wait for message acknowledgment */
+          _suspend(self);
+          return;
         }
-      return;
+      if (_is_readable(self))
+        {
+          if (!iv_task_registered(&self->do_work))
+            {
+              iv_task_register(&self->do_work);
+            }
+          return;
+        }
+      if (self->poll_events)
+        {
+          poll_events_update_watches(self->poll_events, G_IO_IN);
+        }
+      else
+        {
+          _arm_reopen_timer(self);
+        }
     }
-  if (self->poll_events)
+  else
     {
-      poll_events_update_watches(self->poll_events, G_IO_IN);
+      _arm_reopen_timer(self);
     }
 }
 
@@ -409,16 +435,16 @@ _init_persist(LogThrSourceDriver *self)
   g_free(persist_name);
 }
 
-static void
+static gboolean
 _open(LogThrSourceDriver *self)
 {
-  self->worker_opened = TRUE;
+  gboolean result = TRUE;
   msg_debug("Open source", evt_tag_str("source", _get_stats_instance(self)));
   if (self->worker.open)
     {
-      self->worker_opened = self->worker.open(self);
+      result = self->worker.open(self);
     }
-  if (self->worker_opened)
+  if (result)
     {
       msg_debug("Source opened",
           evt_tag_str("source", _get_stats_instance(self)));
@@ -426,16 +452,12 @@ _open(LogThrSourceDriver *self)
         {
           _init_persist(self);
         }
-      _update_watches(self);
     }
   else
     {
-      msg_info("Can't open source, try again after time reopen",
-          evt_tag_str("source", _get_stats_instance(self)),
-          evt_tag_int("time_reopen", self->time_reopen));
-      _suspend(self);
       _arm_reopen_timer(self);
     }
+  return result;
 }
 
 static void
@@ -475,7 +497,7 @@ _init_watches(LogThrSourceDriver* self)
 
   IV_TIMER_INIT(&self->timer_reopen);
   self->timer_reopen.cookie = self;
-  self->timer_reopen.handler = _do_work;
+  self->timer_reopen.handler = (void (*)(void*))_update_watches;
 }
 
 static void

@@ -51,6 +51,7 @@ typedef struct _JavaSourceImpl
     JavaMethod ack;
     JavaMethod nack;
     JavaMethod is_readable;
+    JavaMethod is_opened;
     JavaMethod get_stats_instance;
     JavaMethod get_persist_name;
     JavaMethod get_cursor;
@@ -92,6 +93,7 @@ _init_java_source_impl_instance(JavaSourceImpl *self)
   self->methods.get_persist_name = (JavaMethod){.name = "getPersistNameProxy", .signature = "()Ljava/lang/String;", .optional = FALSE};
   self->methods.get_cursor = (JavaMethod){.name = "getCursorProxy", .signature = "()Ljava/lang/String;", .optional = TRUE};
   self->methods.seek_to_cursor = (JavaMethod){.name = "seekToCursorProxy", .signature = "(Ljava/lang/String;)Z", .optional = TRUE};
+  self->methods.is_opened = (JavaMethod){.name = "isOpenedProxy", .signature = "()Z", .optional = FALSE};
 }
 
 static jmethodID
@@ -226,6 +228,13 @@ java_source_proxy_is_readable(JavaSourceProxy *self)
 {
   USE_JAVA_ENVIRONMENT(self->java_machine);
   return !!(JAVA_FUNCTION(CallBooleanMethod, self->source_impl.source_object, self->source_impl.methods.is_readable.method_id));
+}
+
+gboolean
+java_source_proxy_is_opened(JavaSourceProxy *self)
+{
+  USE_JAVA_ENVIRONMENT(self->java_machine);
+  return !!(JAVA_FUNCTION(CallBooleanMethod, self->source_impl.source_object, self->source_impl.methods.is_opened.method_id));
 }
 
 static gchar *
