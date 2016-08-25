@@ -184,7 +184,10 @@ _arm_reopen_timer(LogThrSourceDriver *self)
   iv_validate_now();
   self->timer_reopen.expires = iv_now;
   self->timer_reopen.expires.tv_sec += self->time_reopen;
-  iv_timer_register(&self->timer_reopen);
+  if (!iv_timer_registered(&self->timer_reopen))
+    {
+      iv_timer_register(&self->timer_reopen);
+    }
 }
 
 static void
