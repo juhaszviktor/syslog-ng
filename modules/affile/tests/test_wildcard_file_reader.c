@@ -30,6 +30,8 @@
 
 #define TEST_FILE_NAME "TEST_FILE"
 
+#ifndef __APPLE__
+
 
 typedef struct _TestFileStateEvent
 {
@@ -196,3 +198,5 @@ Test(test_wildcard_file_reader, status_finished_then_delete)
   cr_assert_eq(test_event->deleted_eof_called, TRUE);
   cr_assert_eq(test_event->finished_called, TRUE);
 }
+
+#endif
