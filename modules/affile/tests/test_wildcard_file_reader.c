@@ -30,8 +30,6 @@
 
 #define TEST_FILE_NAME "TEST_FILE"
 
-#ifndef __APPLE__
-
 
 typedef struct _TestFileStateEvent
 {
@@ -100,6 +98,14 @@ void iv_task_register(struct iv_task *_t)
   _t->handler(_t->cookie);
 }
 
+void file_reader_init_instance(FileReader *self, const gchar *filename,
+                               FileReaderOptions *options, FileOpener *opener,
+                               LogSrcDriver *owner, GlobalConfig *cfg)
+{
+  log_pipe_init_instance(&self->super, cfg);
+  return;
+}
+
 
 static void
 _init(void)
@@ -125,7 +131,6 @@ Test(test_wildcard_file_reader, constructor)
   cr_assert_eq(reader->file_state.last_msg_sent,TRUE);
   cr_assert_eq(reader->file_state.eof, FALSE);
   cr_assert_eq(reader->file_state.deleted, FALSE);
-  cr_assert_str_eq(reader->super.filename->str, TEST_FILE_NAME);
 }
 
 Test(test_wildcard_file_reader, msg_read)
@@ -199,4 +204,3 @@ Test(test_wildcard_file_reader, status_finished_then_delete)
   cr_assert_eq(test_event->finished_called, TRUE);
 }
 
-#endif
